@@ -10,7 +10,7 @@ import scipy.stats
 
 from tvb.simulator.lab import *
 from mne import time_frequency, filter
-import plotly.graph_objects as go  # for data visualisation
+import plotly.graph_objects as go  # for gexplore_data visualisation
 import plotly.io as pio
 
 from tvb.simulator.models.JansenRit_WilsonCowan import JansenRit_WilsonCowan
@@ -101,7 +101,7 @@ sim.configure()
 
 output = sim.run(simulation_length=simLength)
 print("Simulation time: %0.2f sec" % (time.time() - tic0,))
-# Extract data cutting initial transient
+# Extract gexplore_data cutting initial transient
 
 # Wilson-Cowan outputs
 firing_data = output[0][1][transient:, 3, :, 0].T
@@ -115,7 +115,7 @@ cortex_mVdata = sum_vExc_vInh[np.squeeze(jrMask_wc), :]
 raw_time = output[0][0][transient:]
 regionLabels = conn.region_labels
 
-# Check initial transient and cut data
+# Check initial transient and cut gexplore_data
 timeseriesPlot(firing_data, raw_time, regionLabels, title="Thalamus_firing", folder="E:\LCCN_Local\PycharmProjects\\thalamusResearch\\figures")
 multitapper(firing_data, samplingFreq, regionLabels, title="Thalamus_firing", plot=True, folder="E:\LCCN_Local\PycharmProjects\\thalamusResearch\\figures")
 

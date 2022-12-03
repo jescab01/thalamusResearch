@@ -8,10 +8,10 @@ from ThCer_parallel import *
 Following a tutorial: 
 https://towardsdatascience.com/parallel-programming-in-python-with-message-passing-interface-mpi4py-551e3f198053
 
-execute in terminal with : mpiexec -n 4 python mpi_thcer.py
+execute in terminal with : mpiexec -n 4 python mpi_thcer2.py
 """
 
-name = "JR_p0.22sigma0.15_v2"
+name = "JR_pth0.22pcxCUSTOMsigma0.15_v2"
 
 # get number of processors and processor rank
 comm = MPI.COMM_WORLD
@@ -30,9 +30,9 @@ structure_th = ["pTh", "Th", "woTh"]
 
 structure_cer = ["pCer"]
 
-coupling_vals = np.arange(0, 60, 0.25)  # 0.5
-noise_vals = [0.15]  #define valor  # [0, 0.022]  # np.logspace(-8, 2, 30)
-p_vals = [0.22]
+coupling_vals = np.arange(0, 120, 0.25)  # 0.5
+noise_vals = [0.22]  #define valor  # [0, 0.022]  # np.logspace(-8, 2, 30)
+p_vals = ["p_arrays-allNEMOSm08d28y2022-t19h.26m.03s.pkl"]
 n_rep = 3
 
 params = [[subj, model, th, cer, g, p, sigma, r] for subj in subjects

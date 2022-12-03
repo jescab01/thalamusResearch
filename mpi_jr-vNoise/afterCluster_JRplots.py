@@ -4,7 +4,7 @@ import os
 import pandas as pd
 import time
 
-import plotly.graph_objects as go  # for data visualisation
+import plotly.graph_objects as go  # for gexplore_data visualisation
 import plotly.io as pio
 from plotly.subplots import make_subplots
 import plotly.express as px
@@ -12,7 +12,7 @@ import plotly.express as px
 
 # Define PSE folder
 main_folder = 'E:\\LCCN_Local\PycharmProjects\\thalamusResearch\mpi_jr\PSE\\'
-simulations_tag = "PSEmpi_adjustingrange_Noise_v2FULL-m08d01y2022-t10h.37m.19s"  # Tag cluster job
+simulations_tag = "PSEmpi_adjustingrange_allnodesNoise_v2-m11d16y2022-t07h.36m.06s"  # Tag cluster job
 df = pd.read_csv(main_folder + simulations_tag + "/results.csv")
 
 structure_th = ["woTh", "Th", "pTh"]
@@ -33,8 +33,8 @@ for subject in list(set(df_avg.subject)):
     fig = make_subplots(rows=3, cols=4,
                         row_titles=("woTh", "Th", "pTh"),
                         specs=[[{}, {}, {}, {}], [{}, {}, {}, {}], [{}, {}, {}, {}]],
-                        column_titles=["PSE", "bifs_cx", "bifs_th", "FFTpeak"], x_title="Noise (std)",
-                        shared_yaxes=True, shared_xaxes=True)
+                        column_titles=["rPLV", "bifs_cx<br>(signals min-max)", "bifs_th<br>(signals min-max)", "FFTpeak"], x_title="Noise (std)",
+                        shared_yaxes=True, shared_xaxes=True, y_title="Coupling factor (g)")
 
     for j, th in enumerate(structure_th):
         subset = df_avg.loc[(df_avg["subject"] == subject) & (df_avg["th"] == th)]
@@ -47,14 +47,14 @@ for subject in list(set(df_avg.subject)):
             row=(1 + j), col=1)
 
         fig.add_trace(
-            go.Heatmap(z=subset.max_th - subset.min_th, x=subset.sigma, y=subset.g, colorscale='Viridis',
-                       showscale=sl, colorbar=dict(thickness=7), zmin=0, zmax=0.14),
-            row=(1 + j), col=3)
-
-        fig.add_trace(
             go.Heatmap(z=subset.max_cx - subset.min_cx, x=subset.sigma, y=subset.g, colorscale='Viridis',
                        showscale=sl, colorbar=dict(thickness=7), zmin=0, zmax=0.14),
             row=(1 + j), col=2)
+
+        fig.add_trace(
+            go.Heatmap(z=subset.max_th - subset.min_th, x=subset.sigma, y=subset.g, colorscale='Viridis',
+                       showscale=sl, colorbar=dict(thickness=7), zmin=0, zmax=0.14),
+            row=(1 + j), col=3)
 
         fig.add_trace(
             go.Heatmap(z=subset.IAF, x=subset.sigma, y=subset.g, colorscale='Plasma',
@@ -215,7 +215,7 @@ for mode in modes:
 
     for subj in list(set(df.Subject)):
 
-        # subset data per mode and subject
+        # subset gexplore_data per mode and subject
         df_temp = df.loc[(df["Subject"] == subj) & (df["Mode"] == mode)]
 
         # Avg repetitions
@@ -227,7 +227,7 @@ for mode in modes:
 
         name = subj + "_" + mode + "-g" + str(g) + "s" + str(s)
 
-        # save data
+        # save gexplore_data
         df_temp.to_csv(specific_folder + "/" + name +"-3reps.csv")
 
         # plot paramspace
@@ -256,6 +256,6 @@ for subj in list(set(df.Subject)):
 
 
     fig_thcer.update_layout(
-        title_text='FC correlation (empirical - simulated data) by Coupling factor and Conduction speed || %s' % subj)
+        title_text='FC correlation (empirical - simulated gexplore_data) by Coupling factor and Conduction speed || %s' % subj)
     pio.write_html(fig_thcer, file=main_folder + "/ThCer_paramSpace-g&s_%s.html" % subj, auto_open=True)
 

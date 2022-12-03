@@ -13,10 +13,10 @@ import pingouin as pg
 
 # Define PSE folder
 main_folder = 'E:\\LCCN_Local\PycharmProjects\\thalamusResearch\mpi_jr-vMultiStim\PSE\\'
-simulations_tag = "PSEmpi_MultiStim-g2-t60s-ii-m08d24y2022-t17h.42m.02s"  # Tag cluster job
+simulations_tag = "PSEmpi_MultiStim-g2-t60s-postbug-m09d08y2022-t08h.23m.32s"  # Tag cluster job
 df = pd.read_pickle(main_folder + simulations_tag + "/results.pkl")
 
-df=df.astype({'g': float, 'p': float, 'sigma': float, 'rep': float, "plv_m": float, "plv_sd": float,
+df = df.astype({'g': float, 'p': float, 'sigma': float, 'rep': float, "plv_m": float, "plv_sd": float,
              'min_cx': float, 'max_cx': float, 'min_th': float, 'max_th': float, 'IAF': float, 'module': float,
              'bModule': float, 'rPLV': float, 'dFC_KSD': float, 'KOstd': float, 'KOstd_emp': float})
 
@@ -43,13 +43,10 @@ top = df_avg.nlargest(n=10, columns=["rPLV"])
 pg.corr(df_avg["rPLV"], df_avg["dFC_KSD"])
 
 
-df_avg["nstates.s"] = df_avg["nstates"]/60
-df_avg["tstates.s"] = df_avg["tstates"]/60000
-
 ### Plot the most relevant varibles :: "gain", "nstates", "tstates", "pinclusion"
 # x_var, y_var, col_var, row_var = "nstates.s", "tstates.s", "gain", "pinclusion"
 # x_var, y_var, col_var, row_var = "gain", "tstates.s", "nstates.s", "pinclusion"  # first approach
-x_var, y_var, col_var, row_var = "gain", "pinclusion", "tstates.s", "nstates.s"  # second approach
+x_var, y_var, col_var, row_var = "gain", "tstates", "nstates", "pinclusion"   # second approach
 
 
 col_titles = [col_var + "=" + str(round(col_val, 2)) for col_val in sorted(list(set(df_avg[col_var])))]
@@ -85,10 +82,10 @@ for i, row_val in enumerate(sorted(list(set(df_avg[row_var])))):
     for j, col_val in enumerate(sorted(list(set(df_avg[col_var])))):
 
         ## subset gexplore_data
-        subset = df_avg.loc[(df_avg[row_var] == row_val) & (df_avg[col_var] == col_val)]
+        subset = df_avg.loc[(df_avg[row_var] == row_val)& (df_avg[col_var] == col_val)]
 
         fig_ksd.add_trace(go.Heatmap(x=subset[x_var], y=subset[y_var], z=subset["dFC_KSD"],
-                                     reversescale=True, zmax=1, zmin=0.3, colorbar=dict(title="KSD")), row=i+1, col=j+1)
+                                     reversescale=True, zmax=1, zmin=0, colorbar=dict(title="KSD")), row=i+1, col=j+1)
         fig_bModule.add_trace(go.Heatmap(x=subset[x_var], y=subset[y_var], z=subset["bModule"], zmin=2e-12, zmax=6e-12,
                                       colorbar=dict(title="Power")), row=i + 1, col=j + 1)
         fig_rplv.add_trace(go.Heatmap(x=subset[x_var], y=subset[y_var], z=subset["rPLV"], zmin=-0.5, zmax=0.5,

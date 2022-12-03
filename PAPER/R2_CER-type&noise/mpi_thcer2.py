@@ -2,19 +2,16 @@
 import pandas as pd
 from mpi4py import MPI
 import numpy as np
-from ThCer_parallel_n import *
+from ThCer_parallel2 import *
 
 """
 Following a tutorial: 
 https://towardsdatascience.com/parallel-programming-in-python-with-message-passing-interface-mpi4py-551e3f198053
 
-execute in terminal with : mpiexec -n 4 python mpi_thcer2.py
+execute in terminal with : mpiexec -n 2 python mpi_thcer2.py
 """
 
-name = "adjustingrange_allnodesNoise_v2"
-"""
-for this test I have applied the sigma level to all nodes, lets see.
-"""
+name = "JRstd0.022CER"
 
 # get number of processors and processor rank
 comm = MPI.COMM_WORLD
@@ -23,23 +20,25 @@ rank = comm.Get_rank()
 
 ## Define param combinations
 # Common simulation requirements
-subj_ids = [35]#, 49, 50, 58, 59, 64, 65, 71, 75, 77]
+subj_ids = [35, 49, 50, 58, 59, 64, 65, 71, 75, 77]
 subjects = ["NEMOS_0" + str(id) for id in subj_ids]
 # subjects.append("NEMOS_AVG")
 
 models = ["jr"]
 
-structure_th = ["pTh", "Th", "woTh"]
+structure_th = ["pTh"]
 
-structure_cer = ["pCer"]
+structure_cer = ["pCer", "Cer", "woCer"]
 
-coupling_vals = np.arange(0, 45, 0.25)  # 0.5
-noise_vals = np.arange(0.05, 0.5, 0.01)  # np.logspace(-3, 1, 30)  # [0, 0.022]  # np.linspace(0, 0.1, 40)  # 20
-n_rep = 1
+coupling_vals = np.arange(0, 120, 1)  # 0.5
+noise_vals = [0, 0.022]  #define valor  # [0, 0.022]  # np.logspace(-8, 2, 30)
+p_vals = [0.09]
+# p_vals = ["p_arrays-allNEMOSm08d28y2022-t19h.26m.03s.pkl"]
+n_rep = 3
 
-params = [[subj, model, th, cer, g, sigma, r] for subj in subjects
+params = [[subj, model, th, cer, g, p, sigma, r] for subj in subjects
           for model in models for th in structure_th for cer in structure_cer
-          for g in coupling_vals for sigma in noise_vals for r in range(n_rep)]
+          for g in coupling_vals for p in p_vals for sigma in noise_vals for r in range(n_rep)]
 
 params = np.asarray(params, dtype=object)
 n = params.shape[0]
@@ -86,8 +85,9 @@ else:  ## MASTER PROCESS _receive, merge and save results
     # print("Results")
     # print(final_results)
 
-    fResults_df = pd.DataFrame(final_results, columns=["subject", "model", "th", "cer", "g", "sigma", "rep",
-                                                       "min_cx", "max_cx", "min_th", "max_th", "IAF", "module", "bModule", "band",
+    fResults_df = pd.DataFrame(final_results, columns=["subject", "model", "th", "cer", "g", "p", "sigma", "rep",
+                                                       "min_cx", "max_cx", "min_th", "max_th",
+                                                       "IAF", "module", "bModule", "band",
                                                        "rPLV", "dFC_KSD", "KOstd", "KOstd_emp"])
 
     ## Save resutls

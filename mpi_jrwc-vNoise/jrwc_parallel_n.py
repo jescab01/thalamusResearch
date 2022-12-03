@@ -214,8 +214,8 @@ def jrwc_parallel(params_):
         sim.configure()
         output = sim.run(simulation_length=simLength)
 
-        # Extract data: "output[a][b][:,0,:,0].T" where:
-        # a=monitorIndex, b=(data:1,time:0) and [200:,0,:,0].T arranges channel x timepoints and to remove initial transient.
+        # Extract gexplore_data: "output[a][b][:,0,:,0].T" where:
+        # a=monitorIndex, b=(gexplore_data:1,time:0) and [200:,0,:,0].T arranges channel x timepoints and to remove initial transient.
         raw_data = output[0][1][transient:, 0, :, 0].T
         regionLabels = conn.region_labels
 
@@ -270,7 +270,7 @@ def jrwc_parallel(params_):
             # m_ = 3  # pattern size
             # ple, patts = PLE(efPhase, tau_, m_, samplingFreq, subsampling=20)
 
-            # Load empirical data to make simple comparisons
+            # Load empirical gexplore_data to make simple comparisons
             plv_emp = \
                 np.loadtxt(ctb_folder + "FCrms_" + emp_subj + "/" + bands[0][b] + "_plv_rms.txt", delimiter=',')[:,
                 FC_cortex_idx][

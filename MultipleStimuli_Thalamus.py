@@ -250,8 +250,8 @@ sim = simulator.Simulator(model=m, connectivity=conn, coupling=coup, integrator=
 sim.configure()
 output = sim.run(simulation_length=simLength)
 
-# Extract data: "output[a][b][:,0,:,0].T" where:
-# a=monitorIndex, b=(data:1,time:0) and [200:,0,:,0].T arranges channel x timepoints and to remove initial transient.
+# Extract gexplore_data: "output[a][b][:,0,:,0].T" where:
+# a=monitorIndex, b=(gexplore_data:1,time:0) and [200:,0,:,0].T arranges channel x timepoints and to remove initial transient.
 if model == "jrd":
     raw_data = m.w * (output[0][1][transient:, 0, :, 0].T - output[0][1][transient:, 1, :, 0].T) + \
                (1 - m.w) * (output[0][1][transient:, 3, :, 0].T - output[0][1][transient:, 4, :, 0].T)

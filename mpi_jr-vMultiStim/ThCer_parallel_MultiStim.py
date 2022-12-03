@@ -27,7 +27,9 @@ def configure_states(stim_type, gain, nstates, tstates, pinclusion, conn, simLen
         timing = deterministic
     else:
         timing_start = [np.random.randint(low=0, high=simLength) for state in range(nstates)]
-        timing = [[tstart, tstart + abs(round(np.random.normal(tstates, tstates/3)))] for tstart in timing_start]
+        timing = [[tstart, tstart + abs(round(np.random.normal(tstates, tstates / 3)))]
+                  if tstart + abs(round(np.random.normal(tstates, tstates / 3))) < simLength else [tstart, simLength]
+                  for tstart in timing_start]
 
     state_stimulus = []
 
@@ -246,6 +248,12 @@ def ThCer_parallel(params_):
         # Run simulation
         if stimulate:
             stim_type, gain, nstates, tstates, pinclusion, deterministic = stimulate
+
+            if deterministic == "config":
+                times = sorted(np.random.randint(0, simLength * 1000, nstates))
+                deterministic = [[times[i], times[i + 1]] for i in range(len(times) - 1)]
+                deterministic.append([times[-1], simLength])
+
             stimulus, states, timing = configure_states(stim_type, gain, nstates, tstates, pinclusion, conn, simLength, deterministic)
             sim = simulator.Simulator(model=m, connectivity=conn, coupling=coup, integrator=integrator, monitors=mon,
                                       stimulus=stimulus)
@@ -255,8 +263,8 @@ def ThCer_parallel(params_):
         sim.configure()
         output = sim.run(simulation_length=simLength)
 
-        # Extract data: "output[a][b][:,0,:,0].T" where:
-        # a=monitorIndex, b=(data:1,time:0) and [200:,0,:,0].T arranges channel x timepoints and to remove initial transient.
+        # Extract gexplore_data: "output[a][b][:,0,:,0].T" where:
+        # a=monitorIndex, b=(gexplore_data:1,time:0) and [200:,0,:,0].T arranges channel x timepoints and to remove initial transient.
         if model == "jrd":
             raw_data = m.w * (output[0][1][transient:, 0, :, 0].T - output[0][1][transient:, 1, :, 0].T) + \
                        (1 - m.w) * (output[0][1][transient:, 3, :, 0].T - output[0][1][transient:, 4, :, 0].T)
@@ -309,13 +317,16 @@ def ThCer_parallel(params_):
             ## PLV
             plv = PLV(efPhase)
 
+            plv_m = np.average(plv)
+            plv_sd = np.std(plv)
+
             # ## PLE - Phase Lag Entropy
             # ## PLE parameters - Phase Lag Entropy
             # tau_ = 25  # ms
             # m_ = 3  # pattern size
             # ple, patts = PLE(efPhase, tau_, m_, samplingFreq, subsampling=20)
 
-            # Load empirical data to make simple comparisons
+            # Load empirical gexplore_data to make simple comparisons
             plv_emp = \
                 np.loadtxt(ctb_folder + "FCrms_" + emp_subj + "/" + bands[0][b] + "_plv_rms.txt", delimiter=',')[:,
                 FC_cortex_idx][
@@ -332,7 +343,8 @@ def ThCer_parallel(params_):
             window, step = 4, 2  # seconds
 
             ## dFC
-            dFC = dynamic_fc(raw_data, samplingFreq, transient, window, step, "PLV")
+            dFC = dynamic_fc(raw_data, samplingFreq, transient, window, step, "PLV",
+                             filtered=False, lowcut=lowcut, highcut=highcut)
 
             dFC_emp = np.loadtxt(ctb_folderOLD + "FC_" + emp_subj + "/" + bands[0][b] + "_dPLV4s.txt")
 
@@ -351,7 +363,7 @@ def ThCer_parallel(params_):
                 (emp_subj, model, th, cer, g, pth, nth, r, stimulate,
                  min_cx, max_cx, min_th, max_th,
                  IAF[0], module[0], band_module[0], bands[0][b],
-                 plv_r, dFC_ksd, ko_std, ko_emp, states, timing))
+                 plv_r, plv_m, plv_sd, dFC_ksd, ko_std, ko_emp, states, timing))
 
         print("LOOP ROUND REQUIRED %0.3f seconds.\n\n" % (time.time() - tic,))
 

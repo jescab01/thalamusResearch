@@ -1,7 +1,7 @@
 #!/bin/bash
 ##----------------------- Start job description -----------------------
 #SBATCH --partition=standard
-#SBATCH --job-name=test-jrwcPSE
+#SBATCH --job-name=n-jrwcPSE
 #SBATCH --ntasks=600
 #SBATCH --time=70:00:00
 #SBATCH --mem-per-cpu=4G
@@ -13,6 +13,6 @@
 
 module purge && module load Python/3.9.6-GCCcore-11.2.0
 
-srun python jrwc_mpi.py
+srun python jrwc_mpi_n.py
 
 

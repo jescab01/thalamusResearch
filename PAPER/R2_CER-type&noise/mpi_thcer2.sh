@@ -1,7 +1,7 @@
 #!/bin/bash
 ##----------------------- Start job description -----------------------
 #SBATCH --partition=standard
-#SBATCH --job-name=JRp0.22std0.15
+#SBATCH --job-name=r2JR0.022std
 #SBATCH --ntasks=300
 #SBATCH --time=15:00:00
 #SBATCH --mem-per-cpu=4G
@@ -13,6 +13,6 @@
 
 module purge && module load Python/3.9.6-GCCcore-11.2.0
 
-srun python mpi_thcer.py
+srun python mpi_thcer2.py
 
 

@@ -4,7 +4,7 @@ import os
 import pandas as pd
 import time
 
-import plotly.graph_objects as go  # for data visualisation
+import plotly.graph_objects as go  # for gexplore_data visualisation
 import plotly.io as pio
 from plotly.subplots import make_subplots
 import plotly.express as px
@@ -206,7 +206,7 @@ for mode in modes:
 
     for subj in list(set(df.Subject)):
 
-        # subset data per mode and subject
+        # subset gexplore_data per mode and subject
         df_temp = df.loc[(df["Subject"] == subj) & (df["Mode"] == mode)]
 
         # Avg repetitions
@@ -218,7 +218,7 @@ for mode in modes:
 
         name = subj + "_" + mode + "-g" + str(g) + "s" + str(s)
 
-        # save data
+        # save gexplore_data
         df_temp.to_csv(specific_folder + "/" + name +"-3reps.csv")
 
         # plot paramspace
@@ -247,6 +247,6 @@ for subj in list(set(df.Subject)):
 
 
     fig_thcer.update_layout(
-        title_text='FC correlation (empirical - simulated data) by Coupling factor and Conduction speed || %s' % subj)
+        title_text='FC correlation (empirical - simulated gexplore_data) by Coupling factor and Conduction speed || %s' % subj)
     pio.write_html(fig_thcer, file=main_folder + "/ThCer_paramSpace-g&s_%s.html" % subj, auto_open=True)
 

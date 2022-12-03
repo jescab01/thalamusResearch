@@ -3,6 +3,7 @@ import time
 import numpy as np
 import scipy.signal
 import scipy.stats
+import pandas as pd
 
 from tvb.simulator.lab import *
 from mne import filter
@@ -22,7 +23,7 @@ def ThCer_parallel(params_):
 
     ## Folder structure - Local
     if "LCCN_Local" in os.getcwd():
-        ctb_folder = "E:\\LCCN_Local\PycharmProjects\CTB_data2\\"
+        ctb_folder = "E:\\LCCN_Local\PycharmProjects\CTB_data3\\"
         ctb_folderOLD = "E:\\LCCN_Local\PycharmProjects\CTB_dataOLD\\"
         import sys
         sys.path.append("E:\\LCCN_Local\\PycharmProjects\\")
@@ -34,7 +35,7 @@ def ThCer_parallel(params_):
     ## Folder structure - CLUSTER
     else:
         wd = "/home/t192/t192950/mpi/"
-        ctb_folder = wd + "CTB_data2/"
+        ctb_folder = wd + "CTB_data3/"
         ctb_folderOLD = wd + "CTB_dataOLD/"
 
         import sys
@@ -144,7 +145,7 @@ def ThCer_parallel(params_):
                          'Thalamus_L', 'Thalamus_R']
 
         # load text with FC rois; check if match SC
-        FClabs = list(np.loadtxt(ctb_folder + "FCrms_" + emp_subj + "/roi_labels_rms.txt", dtype=str))
+        FClabs = list(np.loadtxt(ctb_folder + "FCavg_" + emp_subj + "/roi_labels.txt", dtype=str))
         FC_cortex_idx = [FClabs.index(roi) for roi in
                          cortical_rois]  # find indexes in FClabs that matches cortical_rois
         SClabs = list(conn.region_labels)
@@ -161,7 +162,13 @@ def ThCer_parallel(params_):
         # NEURAL MASS MODEL    #########################################################
 
         sigma_array = np.asarray([sigma if 'Thal' in roi else 0 for roi in conn.region_labels])
-        p_array = np.asarray([p if 'Thal' in roi else 0.09 for roi in conn.region_labels])
+
+        if type(p) == str:
+            table = pd.read_pickle(ctb_folder + p)
+            p_array = table["p_array"].loc[(table["subject"] == emp_subj) & (table["th"] == th)].values[0]
+
+        else:
+            p_array = np.asarray([p if 'Thal' in roi else 0.09 for roi in conn.region_labels])
 
         if model == "jrd":  # JANSEN-RIT-DAVID
             # Parameters edited from David and Friston (2003).
@@ -211,8 +218,8 @@ def ThCer_parallel(params_):
         sim.configure()
         output = sim.run(simulation_length=simLength)
 
-        # Extract data: "output[a][b][:,0,:,0].T" where:
-        # a=monitorIndex, b=(data:1,time:0) and [200:,0,:,0].T arranges channel x timepoints and to remove initial transient.
+        # Extract gexplore_data: "output[a][b][:,0,:,0].T" where:
+        # a=monitorIndex, b=(gexplore_data:1,time:0) and [200:,0,:,0].T arranges channel x timepoints and to remove initial transient.
         if model == "jrd":
             raw_data = m.w * (output[0][1][transient:, 0, :, 0].T - output[0][1][transient:, 1, :, 0].T) + \
                        (1 - m.w) * (output[0][1][transient:, 3, :, 0].T - output[0][1][transient:, 4, :, 0].T)
@@ -272,9 +279,9 @@ def ThCer_parallel(params_):
             # m_ = 3  # pattern size
             # ple, patts = PLE(efPhase, tau_, m_, samplingFreq, subsampling=20)
 
-            # Load empirical data to make simple comparisons
+            # Load empirical gexplore_data to make simple comparisons
             plv_emp = \
-                np.loadtxt(ctb_folder + "FCrms_" + emp_subj + "/" + bands[0][b] + "_plv_rms.txt", delimiter=',')[:,
+                np.loadtxt(ctb_folder + "FCavg_" + emp_subj + "/" + bands[0][b] + "_plv_avg.txt", delimiter=',')[:,
                 FC_cortex_idx][
                     FC_cortex_idx]
 
@@ -289,7 +296,8 @@ def ThCer_parallel(params_):
             window, step = 4, 2  # seconds
 
             ## dFC
-            dFC = dynamic_fc(raw_data, samplingFreq, transient, window, step, "PLV")
+            dFC = dynamic_fc(raw_data, samplingFreq, transient, window, step, "PLV",
+                             filtered=False, lowcut=lowcut, highcut=highcut)
 
             dFC_emp = np.loadtxt(ctb_folderOLD + "FC_" + emp_subj + "/" + bands[0][b] + "_dPLV4s.txt")
 
@@ -300,7 +308,7 @@ def ThCer_parallel(params_):
             dFC_ksd = scipy.stats.kstest(dFC[np.triu_indices(len(dFC), 1)], dFC_emp[np.triu_indices(len(dFC), 1)])[0]
 
             ## Metastability: Kuramoto Order Parameter
-            ko_std, ko_mean = kuramoto_order(raw_data, samplingFreq)
+            ko_std, ko_mean = kuramoto_order(raw_data, samplingFreq, filtered=False, lowcut=lowcut, highcut=highcut)
             ko_emp = np.loadtxt(ctb_folderOLD + "FC_" + emp_subj + "/" + bands[0][b] + "_sdKO.txt")
 
             ## Gather results

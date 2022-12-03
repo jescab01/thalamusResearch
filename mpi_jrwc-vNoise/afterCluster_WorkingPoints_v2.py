@@ -4,7 +4,7 @@ import os
 import pandas as pd
 import time
 
-import plotly.graph_objects as go  # for data visualisation
+import plotly.graph_objects as go  # for gexplore_data visualisation
 import plotly.io as pio
 from plotly.subplots import make_subplots
 import plotly.express as px
@@ -37,14 +37,14 @@ def WPplot(df, z=None, title=None, type="linear", folder="figures", auto_open="T
                              reversescale=True), row=1, col=6)
 
     fig_fc.update_layout(yaxis1_type=type,yaxis2_type=type,yaxis3_type=type,yaxis4_type=type,yaxis5_type=type,
-        title_text='FC correlation (empirical - simulated data) by Coupling factor and Conduction speed || %s' % title)
+        title_text='FC correlation (empirical - simulated gexplore_data) by Coupling factor and Conduction speed || %s' % title)
     pio.write_html(fig_fc, file=folder + "/paramSpace-g&s_%s.html" % title, auto_open=auto_open)
 
 
 
 # Define PSE folder
-main_folder = 'E:\\LCCN_Local\PycharmProjects\\thalamusResearch\mpi_jrwc\PSE\\'
-simulations_tag = "PSEmpi_Log-JRWCstd0.022-m08d10y2022-t14h.25m.09s"  # Tag cluster job
+main_folder = 'E:\\LCCN_Local\PycharmProjects\\thalamusResearch\mpi_jrwc-vNoise\PSE\\'
+simulations_tag = "PSEmpi_Log-JRWCstd0.022-m08d12y2022-t13h.52m.41s"  # Tag cluster job
 df = pd.read_csv(main_folder + simulations_tag + "/results.csv")
 
 modes = [""]
@@ -172,7 +172,7 @@ for mode in modes:
 
     for subj in list(set(df.Subject)):
 
-        # subset data per mode and subject
+        # subset gexplore_data per mode and subject
         df_temp = df.loc[(df["Subject"] == subj) & (df["Mode"] == mode)]
 
         # Avg repetitions
@@ -184,7 +184,7 @@ for mode in modes:
 
         name = subj + "_" + mode + "-g" + str(g) + "s" + str(s)
 
-        # save data
+        # save gexplore_data
         df_temp.to_csv(specific_folder + "/" + name +"-3reps.csv")
 
         # plot paramspace
@@ -213,6 +213,6 @@ for subj in list(set(df.Subject)):
 
 
     fig_thcer.update_layout(
-        title_text='FC correlation (empirical - simulated data) by Coupling factor and Conduction speed || %s' % subj)
+        title_text='FC correlation (empirical - simulated gexplore_data) by Coupling factor and Conduction speed || %s' % subj)
     pio.write_html(fig_thcer, file=main_folder + "/ThCer_paramSpace-g&s_%s.html" % subj, auto_open=True)
 

@@ -8,7 +8,7 @@ from ThCer_parallel_p import *
 Following a tutorial: 
 https://towardsdatascience.com/parallel-programming-in-python-with-message-passing-interface-mpi4py-551e3f198053
 
-execute in terminal with : mpiexec -n 4 python mpi_thcer.py
+execute in terminal with : mpiexec -n 4 python mpi_thcer2.py
 """
 
 name = "adjustrange_P"

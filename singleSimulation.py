@@ -6,8 +6,9 @@ import scipy.stats
 import matplotlib.pyplot as plt
 
 from tvb.simulator.lab import *
+import tvb.datatypes.projections as projections
 from mne import filter
-from tvb.simulator.models.jansen_rit_david_mine import JansenRitDavid2003
+from tvb.simulator.models.jansen_rit_david_mine import JansenRitDavid2003, JansenRit1995
 import datetime
 
 
@@ -20,6 +21,7 @@ if "LCCN_Local" in os.getcwd():
     from toolbox.signals import epochingTool, timeseriesPlot
     from toolbox.fc import PLV
     from toolbox.dynamics import dynamic_fc
+    from toolbox.mixes import timeseries_spectra
 
 ## Folder structure - CLUSTER
 else:
@@ -32,13 +34,14 @@ else:
 
 
 # Prepare simulation parameters
-simLength = 5 * 1000  # ms
+simLength = 22 * 1000  # ms
 samplingFreq = 1000  # Hz
-transient = 500  # ms
+transient = 2000  # ms
 
-emp_subj, model, th, g, s = "NEMOS_035", "jr", "wpTh", 9, 9.5
+emp_subj, model, th, g, s = "NEMOS_035", "jr", "wpTh", 3, 15
 
 tic = time.time()
+
 
 
 # STRUCTURAL CONNECTIVITY      #########################################
@@ -84,17 +87,10 @@ cortical_rois = ['Precentral_L', 'Precentral_R', 'Frontal_Sup_2_L',
                  'Temporal_Pole_Sup_R', 'Temporal_Mid_L', 'Temporal_Mid_R',
                  'Temporal_Pole_Mid_L', 'Temporal_Pole_Mid_R', 'Temporal_Inf_L',
                  'Temporal_Inf_R']
-cingulum_rois = ['Frontal_Mid_2_L', 'Frontal_Mid_2_R',
-                 'Insula_L', 'Insula_R',
-                 'Cingulate_Ant_L', 'Cingulate_Ant_R', 'Cingulate_Post_L', 'Cingulate_Post_R',
-                 'Hippocampus_L', 'Hippocampus_R', 'ParaHippocampal_L',
-                 'ParaHippocampal_R', 'Amygdala_L', 'Amygdala_R',
-                 'Parietal_Sup_L', 'Parietal_Sup_R', 'Parietal_Inf_L',
-                 'Parietal_Inf_R', 'Precuneus_L', 'Precuneus_R',
-                 'Thalamus_L', 'Thalamus_R']
+
 
 # load text with FC rois; check if match SC
-FClabs = list(np.loadtxt(ctb_folder + "FCrms_" + emp_subj + "/roi_labels_rms.txt", dtype=str))
+FClabs = list(np.loadtxt(ctb_folder + "FCavg_" + emp_subj + "/roi_labels.txt", dtype=str))
 FC_cortex_idx = [FClabs.index(roi) for roi in
                  cortical_rois]  # find indexes in FClabs that matches cortical_rois
 SClabs = list(conn.region_labels)
@@ -102,13 +98,12 @@ SC_cortex_idx = [SClabs.index(roi) for roi in cortical_rois]
 
 
 # NEURAL MASS MODEL    #########################################################
+sigma_array = np.asarray([0.15 if 'Thal' in roi else 0 for roi in conn.region_labels])
+p_array = np.asarray([0.22 if 'Thal' in roi else 0.09 for roi in conn.region_labels])
+taui_sel = 10
+taui_array = np.asarray([taui_sel if 'Precentral' in roi else 20 for roi in conn.region_labels])
+
 if model == "jrd":  # JANSEN-RIT-DAVID
-    # if "_def" in mode:
-    #     sigma_array = 0.022
-    #     p_array = 0.22
-    # else:  # for jrd_pTh and jrd modes
-    sigma_array = np.asarray([0.022 if 'Thal' in roi else 0 for roi in conn.region_labels])
-    p_array = np.asarray([0.22 if 'Thal' in roi else 0 for roi in conn.region_labels])
 
     # Parameters edited from David and Friston (2003).
     m = JansenRitDavid2003(He1=np.array([3.25]), Hi1=np.array([22]),  # SLOW population
@@ -126,21 +121,21 @@ if model == "jrd":  # JANSEN-RIT-DAVID
     m.He1, m.Hi1 = np.array([32.5 / m.tau_e1]), np.array([440 / m.tau_i1])
     m.He2, m.Hi2 = np.array([32.5 / m.tau_e2]), np.array([440 / m.tau_i2])
 
+    coup = coupling.SigmoidalJansenRitDavid(a=np.array([g]), w=np.array([0.8]), e0=np.array([0.005]),
+                                            v0=np.array([6.0]), r=np.array([0.56]))
+
 else:  # JANSEN-RIT
     # Parameters from Stefanovski 2019. Good working point at g=33, s=15.5 on AAL2red connectome.
-    m = models.JansenRit(A=np.array([3.25]), B=np.array([22]), J=np.array([1]),
-                         a=np.array([0.1]), a_1=np.array([135]), a_2=np.array([108]),
-                         a_3=np.array([33.75]), a_4=np.array([33.75]), b=np.array([0.06]),
-                         mu=np.array([0.1085]), nu_max=np.array([0.0025]), p_max=np.array([0]),
-                         p_min=np.array([0]),
-                         r=np.array([0.56]), v0=np.array([6]))
+    m = JansenRit1995(He=np.array([3.25]), Hi=np.array([22]),
+                      tau_e=np.array([10]), tau_i=np.array([taui_array]),
+                      c=np.array([1]), c_pyr2exc=np.array([135]), c_exc2pyr=np.array([108]),
+                      c_pyr2inh=np.array([33.75]), c_inh2pyr=np.array([33.75]),
+                      p=np.array([p_array]), sigma=np.array([sigma_array]),
+                      e0=np.array([0.005]), r=np.array([0.56]), v0=np.array([6]))
 
-# COUPLING FUNCTION   #########################################
-if model == "jrd":
-    coup = coupling.SigmoidalJansenRitDavid(a=np.array([g]), w=m.w, e0=m.e0, v0=m.v0, r=m.r)
-else:
     coup = coupling.SigmoidalJansenRit(a=np.array([g]), cmax=np.array([0.005]), midpoint=np.array([6]),
                                        r=np.array([0.56]))
+
 conn.speed = np.array([s])
 
 # OTHER PARAMETERS   ###
@@ -148,95 +143,35 @@ conn.speed = np.array([s])
 # integrator = integrators.HeunStochastic(dt=1000/samplingFreq, noise=noise.Additive(nsig=np.array([5e-6])))
 integrator = integrators.HeunDeterministic(dt=1000 / samplingFreq)
 
-mon = (monitors.Raw(),)
 
 
-#   STIMULUS      #########################
-# Multiple stimuli tutorial ::
-# https://github.com/the-virtual-brain/tvb-root/blob/master/tvb_documentation/demos/multiple_stimuli.ipynb
+# Region mapping indices come from Brainstorm; change them to match SC indices.
+rm_pre = region_mapping.RegionMapping.from_file(ctb_folder + "tvbMonitor-EEG65_ICBM152_AAL2pth\\regionmapping-AAL2pth_toICBM152.txt")
+rm_post = region_mapping.RegionMapping.from_file(ctb_folder + "tvbMonitor-EEG65_ICBM152_AAL2pth\\regionmapping-AAL2pth_toICBM152.txt")
+# load text with FC rois; check if match SC
+FClabs = list(np.loadtxt(ctb_folder + "tvbMonitor-EEG65_ICBM152_AAL2pth\\roi_labels.txt", dtype=str))
+SC_fromFC_idx = [list(conn.region_labels).index(roi) if roi in conn.region_labels else "nan" for roi in FClabs]  # find indexes in FClabs that matches cortical_rois
 
-# what type of stimulus?
-stimulus_type = 'sinusoid'
+for i, sc_idx in enumerate(SC_fromFC_idx):
+    rm_post.array_data[rm_pre.array_data == i] = sc_idx
 
-# Where
-where = 'random_th'
+## update conn
+conn.region_labels=conn.region_labels[SC_fromFC_idx]
+conn.weights=conn.weights[:, SC_fromFC_idx][SC_fromFC_idx]
+conn.tract_lengths = conn.tract_lengths[:, SC_fromFC_idx][SC_fromFC_idx]
+conn.centres = conn.centres[SC_fromFC_idx]
+conn.cortical = conn.cortical[SC_fromFC_idx]
 
-state1_weighting = np.asarray([np.round(np.random.random()) if "Thal" in roi else 0 for roi in conn.region_labels])
-state2_weighting = np.asarray([np.round(np.random.random()) if "Thal" in roi else 0 for roi in conn.region_labels])
+pr = projections.ProjectionSurfaceEEG.from_file(ctb_folder + "tvbMonitor-EEG65_ICBM152_AAL2pth\\headmodel-ICBM152_toEEG65.mat")
+ss = sensors.SensorsEEG.from_file(source_file=ctb_folder + "tvbMonitor-EEG65_ICBM152_AAL2pth\\sensors-EEG65.txt")
 
-# When
-when = {"state1_start": 2000, "state1_end": 3000,
-        "state2_start": 3500, "state2_end": 4000}
-
-# What
-what = {"dc_offset": 0.05, "sin_amp": 0.05, "noise_std": 0.15}
-
-
-# stim_params = {"type": "dc",
-#                "labels": ["state1", "state2", "state1"],
-#                "when": [(1000, 1500), (1300, 2000), (2500, 3500)],
-#                "weighting": [state1_weighting}
-
-
-if stimulus_type == "dc":
-
-    # State 1 weighting -
-    eqn_t = equations.DC()
-    eqn_t.parameters.update(dc_offset=what["dc_offset"], t_start=when["state1_start"], t_end=when["state1_end"])
-    state1_stimulus = patterns.StimuliRegion(temporal=eqn_t, connectivity=conn, weight=state1_weighting)
-
-    # State 2 weighting -
-    eqn_t = equations.DC()
-    eqn_t.parameters.update(dc_offset=what["dc_offset"], t_start=when["state2_start"], t_end=when["state2_end"])
-    state2_stimulus = patterns.StimuliRegion(temporal=eqn_t, connectivity=conn, weight=state2_weighting)
-
-elif stimulus_type == "sinusoid":
-
-    # State 1 weighting -
-    eqn_t = equations.Sinusoid()
-    eqn_t.parameters.update(amp=what["sin_amp"], frequency=10, onset=when["state1_start"], offset=when["state1_end"])
-    state1_stimulus = patterns.StimuliRegion(temporal=eqn_t, connectivity=conn, weight=state1_weighting)
-
-    # State 2 weighting -
-    eqn_t = equations.Sinusoid()
-    eqn_t.parameters.update(amp=what["sin_amp"], frequency=10, onset=when["state2_start"], offset=when["state2_end"])
-    state2_stimulus = patterns.StimuliRegion(temporal=eqn_t, connectivity=conn, weight=state2_weighting)
-
-elif stimulus_type == "noise":
-
-    # # RNS
-    # eqn_t = equations.Noise()
-    # eqn_t.parameters["mean"] = stim_params
-    # eqn_t.parameters["std"] = (1 - eqn_t.parameters[
-    #     "mean"]) / 3  # p(mean<x<mean+std) = 0.34 in gaussian distribution [max=1; min=-1]
-    # eqn_t.parameters["onset"] = 0
-    # eqn_t.parameters["offset"] = simLength
-
-    # State 1 weighting -
-    eqn_t = equations.Noise()
-    eqn_t.parameters.update(mean=0, std=what["noise_std"], onset=when["state1_start"], offset=when["state1_end"])
-    state1_stimulus = patterns.StimuliRegion(temporal=eqn_t, connectivity=conn, weight=state1_weighting)
-
-    # State 2 weighting -
-    eqn_t = equations.Noise()
-    eqn_t.parameters.update(mean=0, std=what["noise_std"], onset=when["state2_start"], offset=when["state2_end"])
-    state2_stimulus = patterns.StimuliRegion(temporal=eqn_t, connectivity=conn, weight=state2_weighting)
-
-stimulus = patterns.MultiStimuliRegion(state1_stimulus, state2_stimulus)
-stimulus.configure_space()
-stimulus.configure_time(np.arange(0, simLength, 1))
-
-pattern = stimulus()
-plt.imshow(pattern, interpolation='none', aspect='auto')
-plt.xlabel('Time')
-plt.ylabel('Space')
-plt.colorbar()
+mon = (monitors.Raw(), monitors.EEG(projection=pr, sensors=ss, region_mapping=rm_post))
 
 print("Simulating %s (%is)  ||  PARAMS: g%i s%i" % (model, simLength / 1000, g, s))
 
 
 # Run simulation
-sim = simulator.Simulator(model=m, connectivity=conn, coupling=coup, integrator=integrator, monitors=mon, stimulus=stimulus)
+sim = simulator.Simulator(model=m, connectivity=conn, coupling=coup, integrator=integrator, monitors=mon)
 sim.configure()
 output = sim.run(simulation_length=simLength)
 
@@ -251,14 +186,8 @@ raw_time = output[0][0][transient:]
 regionLabels = conn.region_labels
 
 
-timeseriesPlot(raw_data[state1_weighting==1], raw_time, regionLabels[state1_weighting==1], folder="figures", title=None, mode="html", auto_open=True)
-
-# Saving in FFT results: coupling value, conduction speed, mean signal freq peak (Hz; module), all signals info.
-# _, _, IAF, module, band_module = multitapper(raw_data, samplingFreq, regionLabels, peaks=True)
-#
-#
-# print("LOOP ROUND REQUIRED %0.3f seconds.\n\n" % (time.time() - tic,))
-
-
+## Plot
+timeseries_spectra(raw_data, simLength, transient, regionLabels, mode="html", folder="figures",
+                       freqRange=[9, 13], opacity=1, title="taui"+str(taui_sel)+"_precentral", auto_open=True)
 
 

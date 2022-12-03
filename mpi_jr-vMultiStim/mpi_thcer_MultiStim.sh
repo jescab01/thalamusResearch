@@ -3,6 +3,7 @@
 #SBATCH --partition=standard
 #SBATCH --job-name=MultiStim
 #SBATCH --ntasks=400
+#SBATCH --mem-per-cpu=4G
 #SBATCH --time=08:00:00
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=F_r_e@hotmail.es

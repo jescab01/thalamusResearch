@@ -14,7 +14,7 @@ https://towardsdatascience.com/parallel-programming-in-python-with-message-passi
 execute in terminal with : mpiexec -n 4 python mpi_thcer_MultiStim.py
 """
 
-name = "MultiStim"
+name = "MultiStim-g2-t60s-postbug"
 
 # get number of processors and processor rank
 comm = MPI.COMM_WORLD
@@ -23,7 +23,7 @@ rank = comm.Get_rank()
 
 ## Define param combinations
 # Common simulation requirements
-subj_ids = [35]#, 49, 50, 58, 59, 64, 65, 71, 75, 77]
+subj_ids = [35]  #, 49, 50, 58, 59, 64, 65, 71, 75, 77]
 subjects = ["NEMOS_0" + str(id) for id in subj_ids]
 # subjects.append("NEMOS_AVG")
 
@@ -31,22 +31,47 @@ subjects = ["NEMOS_0" + str(id) for id in subj_ids]
 models = ["jr"]
 structure_th = ["pTh"]
 structure_cer = ["pCer"]
-coupling_vals = [3]  # g==3 before bifurcation  # np.arange(0, 100, 0.5)  # 0.5
+coupling_vals = [2]  # g==3 before bifurcation  # np.arange(0, 100, 0.5)  # 0.5
 pth_vals = [0.22]  # np.arange(0.09, 0.4, 0.005)  # p(cortex)=0.09
 nth_vals = [0.15]  # np.logspace(-8, 2, 30)  # [0, 0.022]  # np.linspace(0, 0.1, 40)  # 20
 n_rep = 3
 
 # Explored parameters :: multi-stimulation
+## First PSE; 60s simulation
 ms_gains = np.arange(0.01, 1, 0.1)
 ms_nstates = np.arange(2, 11, 2)
 ms_tstates = np.arange(500, 10000, 1000)
 ms_pinclusion = np.arange(0.05, 0.3, 0.05)
 
+## Second PSE; 60s simulation
+# ms_gains = [0.1, 0.25, 0.5]
+# ms_pinclusion = [0.15]  # it is randomized, number of regions stimulated will change, thats enough for now.
+# ms_nstates = np.arange(2, 200, 5)  # 300states = 5states/s [min=0; max=+inf]
+# ms_tstates = np.arange(500, 50000, 2500)  # 10000tstate = 0.16tstate/s [min=0; max=1]
+
+# ## Third PSE; 60s simulation
+# ms_gains = np.arange(0.01, 1.5, 0.1)
+# ms_pinclusion = np.arange(0.05, 0.5, 0.025)  # it is randomized, number of regions stimulated will change, thats enough for now.
+# ms_nstates = [30]  # 0.5 states.s
+# ms_tstates = [5500]  # 0.1 tstates.s
+
+# ## Third PSE; 60s simulation
+# ms_gains = np.arange(0.01, 1.5, 0.01)
+# ms_pinclusion = [0.01, 0.05, 0.1, 0.15, 0.3, 0.5]  # it is randomized, number of regions stimulated will change, thats enough for now.
+# ms_nstates = [30]  # 0.5 states.s
+# ms_tstates = [5500]  # 0.1 tstates.s
+
+# Third PSE; 60s simulation
+# ms_gains = np.arange(0.01, 1, 0.025)
+# ms_pinclusion = [0.1, 0.15, 0.3]  # it is randomized, number of regions stimulated will change, thats enough for now.
+# ms_nstates = np.arange(2, 100, 5)  # 0.5 states.s
+
+
 params = [[subj, model, th, cer, g, pth, nth, r, ["sinusoid", gain, nstates, tstates, pinclusion, False]]
           for subj in subjects for model in models for th in structure_th for cer in structure_cer
           for g in coupling_vals for pth in pth_vals for nth in nth_vals for r in range(n_rep)
-          for gain in ms_gains for nstates in ms_nstates
-          for tstates in ms_tstates for pinclusion in ms_pinclusion]
+          for gain in ms_gains for nstates in ms_nstates for tstates in ms_tstates
+          for pinclusion in ms_pinclusion]
 
 params = np.asarray(params, dtype=object)
 n = params.shape[0]
@@ -95,7 +120,7 @@ else:  ## MASTER PROCESS _receive, merge and save results
 
     fResults_df = pd.DataFrame(final_results, columns=["subject", "model", "th", "cer", "g", "p", "sigma", "rep", "stim_params",
                                                        "min_cx", "max_cx", "min_th", "max_th", "IAF", "module", "bModule", "band",
-                                                       "rPLV", "dFC_KSD", "KOstd", "KOstd_emp", "states", "timing"])
+                                                       "rPLV", "plv_m", "plv_sd", "dFC_KSD", "KOstd", "KOstd_emp", "states", "timing"])
 
     ## Save resutls
     ## Folder structure - Local

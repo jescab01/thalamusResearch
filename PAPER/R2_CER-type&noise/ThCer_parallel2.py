@@ -3,6 +3,7 @@ import time
 import numpy as np
 import scipy.signal
 import scipy.stats
+import pandas as pd
 
 from tvb.simulator.lab import *
 from mne import filter
@@ -12,7 +13,6 @@ import datetime
 
 
 def ThCer_parallel(params_):
-
     result = list()
 
     comm = MPI.COMM_WORLD
@@ -23,7 +23,7 @@ def ThCer_parallel(params_):
 
     ## Folder structure - Local
     if "LCCN_Local" in os.getcwd():
-        ctb_folder = "E:\\LCCN_Local\PycharmProjects\CTB_data3\\"
+        ctb_folder = "E:\\LCCN_Local\PycharmProjects\CTB_data2\\"
         ctb_folderOLD = "E:\\LCCN_Local\PycharmProjects\CTB_dataOLD\\"
         import sys
         sys.path.append("E:\\LCCN_Local\\PycharmProjects\\")
@@ -35,7 +35,7 @@ def ThCer_parallel(params_):
     ## Folder structure - CLUSTER
     else:
         wd = "/home/t192/t192950/mpi/"
-        ctb_folder = wd + "CTB_data3/"
+        ctb_folder = wd + "CTB_data2/"
         ctb_folderOLD = wd + "CTB_dataOLD/"
 
         import sys
@@ -47,9 +47,9 @@ def ThCer_parallel(params_):
 
 
     # Prepare simulation parameters
-    simLength = 10 * 1000  # ms
+    simLength = 60 * 1000  # ms
     samplingFreq = 1000  # Hz
-    transient = 2000  # ms
+    transient = 4000  # ms
 
     for ii, set in enumerate(params_):
 
@@ -57,7 +57,7 @@ def ThCer_parallel(params_):
         print("Rank %i out of %i  ::  %i/%i " % (rank, size, ii + 1, len(params_)))
 
         print(set)
-        emp_subj, model, th, cer, g, sigma, r = set
+        emp_subj, model, th, cer, g, p, sigma, r = set
 
         # STRUCTURAL CONNECTIVITY      #########################################
         # Use "pass" for subcortical (thalamus) while "end" for cortex
@@ -136,7 +136,6 @@ def ThCer_parallel(params_):
                          'Temporal_Pole_Mid_L', 'Temporal_Pole_Mid_R', 'Temporal_Inf_L',
                          'Temporal_Inf_R']
 
-
         # load text with FC rois; check if match SC
         FClabs = list(np.loadtxt(ctb_folder + "FCavg_" + emp_subj + "/roi_labels.txt", dtype=str))
         FC_cortex_idx = [FClabs.index(roi) for roi in
@@ -147,8 +146,14 @@ def ThCer_parallel(params_):
 
         # NEURAL MASS MODEL    #########################################################
 
-        sigma_array = np.asarray([sigma if 'Thal' in roi else sigma for roi in conn.region_labels])
-        p_array = np.asarray([0.22 if 'Thal' in roi else 0.09 for roi in conn.region_labels])
+        sigma_array = np.asarray([sigma if 'Cer' in roi else 0 for roi in conn.region_labels])
+
+        if type(p) == str:
+            table = pd.read_pickle(ctb_folder + p)
+            p_array = table["p_array"].loc[(table["subject"] == emp_subj) & (table["th"] == th)].values[0]
+
+        else:
+            p_array = np.asarray([p if 'Thal' in roi else 0.09 for roi in conn.region_labels])
 
         if model == "jrd":  # JANSEN-RIT-DAVID
             # Parameters edited from David and Friston (2003).
@@ -168,7 +173,6 @@ def ThCer_parallel(params_):
             m.He2, m.Hi2 = np.array([32.5 / m.tau_e2]), np.array([440 / m.tau_i2])
 
         else:  # JANSEN-RIT
-            # Parameters from Stefanovski 2019. Good working point at g=33, s=15.5 on AAL2red connectome.
             m = JansenRit1995(He=np.array([3.25]), Hi=np.array([22]),
                               tau_e=np.array([10]), tau_i=np.array([20]),
                               c=np.array([1]), c_pyr2exc=np.array([135]), c_exc2pyr=np.array([108]),
@@ -214,8 +218,7 @@ def ThCer_parallel(params_):
         max_th = np.average(np.array([max(signal) for i, signal in enumerate(raw_data) if "Thal" in regionLabels[i]]))
         min_th = np.average(np.array([min(signal) for i, signal in enumerate(raw_data) if "Thal" in regionLabels[i]]))
 
-        # Extract signals of interest ## BE AWARE of the NOT
-        # if "cb" not in mode:
+        # Extract signals of interest
         raw_data = raw_data[SC_cortex_idx, :]
         regionLabels = conn.region_labels[SC_cortex_idx]
 
@@ -253,12 +256,6 @@ def ThCer_parallel(params_):
             ## PLV
             plv = PLV(efPhase)
 
-            # ## PLE - Phase Lag Entropy
-            # ## PLE parameters - Phase Lag Entropy
-            # tau_ = 25  # ms
-            # m_ = 3  # pattern size
-            # ple, patts = PLE(efPhase, tau_, m_, samplingFreq, subsampling=20)
-
             # Load empirical gexplore_data to make simple comparisons
             plv_emp = \
                 np.loadtxt(ctb_folder + "FCavg_" + emp_subj + "/" + bands[0][b] + "_plv_avg.txt", delimiter=',')[:,
@@ -276,7 +273,8 @@ def ThCer_parallel(params_):
             window, step = 4, 2  # seconds
 
             ## dFC
-            dFC = dynamic_fc(raw_data, samplingFreq, transient, window, step, "PLV")
+            dFC = dynamic_fc(raw_data, samplingFreq, transient, window, step, "PLV",
+                             filtered=False, lowcut=lowcut, highcut=highcut)
 
             dFC_emp = np.loadtxt(ctb_folderOLD + "FC_" + emp_subj + "/" + bands[0][b] + "_dPLV4s.txt")
 
@@ -287,12 +285,12 @@ def ThCer_parallel(params_):
             dFC_ksd = scipy.stats.kstest(dFC[np.triu_indices(len(dFC), 1)], dFC_emp[np.triu_indices(len(dFC), 1)])[0]
 
             ## Metastability: Kuramoto Order Parameter
-            ko_std, ko_mean = kuramoto_order(raw_data, samplingFreq)
+            ko_std, ko_mean = kuramoto_order(raw_data, samplingFreq, filtered=False, lowcut=lowcut, highcut=highcut)
             ko_emp = np.loadtxt(ctb_folderOLD + "FC_" + emp_subj + "/" + bands[0][b] + "_sdKO.txt")
 
             ## Gather results
             result.append(
-                (emp_subj, model, th, cer, g, sigma, r,
+                (emp_subj, model, th, cer, g, p, sigma, r,
                  min_cx, max_cx, min_th, max_th,
                  IAF[0], module[0], band_module[0], bands[0][b],
                  plv_r, dFC_ksd, ko_std, ko_emp))
