@@ -3,7 +3,6 @@ import time
 import numpy as np
 import scipy.signal
 import scipy.stats
-import pandas as pd
 
 from tvb.simulator.lab import *
 from mne import filter
@@ -11,79 +10,55 @@ from tvb.simulator.models.jansen_rit_david_mine import JansenRitDavid2003, Janse
 from mpi4py import MPI
 import datetime
 
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
-import plotly.express as px
-import plotly.io as pio
 
-
-
-
-
-comm = MPI.COMM_WORLD
-size = comm.Get_size()
-rank = comm.Get_rank()
-
-print("Hello world from rank", str(rank), "of", str(size), '__', datetime.datetime.now().strftime("%Hh:%Mm:%Ss"))
-
-## Folder structure - Local
-if "LCCN_Local" in os.getcwd():
-    ctb_folder = "E:\\LCCN_Local\PycharmProjects\CTB_data3\\"
-    ctb_folderOLD = "E:\\LCCN_Local\PycharmProjects\CTB_dataOLD\\"
-    import sys
-    sys.path.append("E:\\LCCN_Local\\PycharmProjects\\")
-    from toolbox.fft import multitapper
-    from toolbox.signals import epochingTool
-    from toolbox.fc import PLV
-    from toolbox.dynamics import dynamic_fc, kuramoto_order
-
-## Folder structure - CLUSTER
-else:
-    wd = "/home/t192/t192950/mpi/"
-    ctb_folder = wd + "CTB_data3/"
-    ctb_folderOLD = wd + "CTB_dataOLD/"
-
-    import sys
-    sys.path.append(wd)
-    from toolbox.fft import multitapper
-    from toolbox.signals import epochingTool
-    from toolbox.fc import PLV
-    from toolbox.dynamics import dynamic_fc, kuramoto_order
-
-
-
-# Prepare simulation parameters
-simLength = 10 * 1000  # ms
-samplingFreq = 1000  # Hz
-transient = 2000  # ms
-
-subj_ids = [35] #, 49, 50, 58, 59, 64, 65, 71, 75, 77]
-subjects = ["NEMOS_0" + str(id) for id in subj_ids]
-# subjects.append("NEMOS_AVG")
-
-coupling_vals = np.arange(0, 30, 0.5)  # 0.5
-
-
-### MODE 1: th-noisy
-# modes_dict = {"th_noisy": [subjects[0], "jr", "pTh", "pCer", 0.15, 0.22, 0.09, 0],
-#               "th_noisy_phetero": [subjects[0], "jr", "pTh", "pCer", 0.15, 0.22, "MLR", 0],
-#               "allnoisy": [subjects[0], "jr", "pTh", "pCer", 0.15, 0.22, 0.09, 0.22],
-#               "classical": [subjects[0], "jr", "pTh", "pCer", 0.09, 0, 0.09, 0]}
-modes_dict = {"allnoisy_prebif": [subjects[0], "jr", "pTh", "pCer", 0.09, 0.022, 0.09, 0.022]}
-
-for mode, args in modes_dict.items():
-    emp_subj, model, th, cer, pth, sigmath, pcx, sigmacx = args
-    print(args)
-
+def ThCer_parallel(params_):
     result = list()
-    for ii, g in enumerate(coupling_vals):
+
+    comm = MPI.COMM_WORLD
+    size = comm.Get_size()
+    rank = comm.Get_rank()
+
+    print("Hello world from rank", str(rank), "of", str(size), '__', datetime.datetime.now().strftime("%Hh:%Mm:%Ss"))
+
+    ## Folder structure - Local
+    if "LCCN_Local" in os.getcwd():
+        ctb_folder = "E:\\LCCN_Local\PycharmProjects\CTB_data3\\"
+        ctb_folderOLD = "E:\\LCCN_Local\PycharmProjects\CTB_dataOLD\\"
+        import sys
+        sys.path.append("E:\\LCCN_Local\\PycharmProjects\\")
+        from toolbox.fft import multitapper
+        from toolbox.signals import epochingTool
+        from toolbox.fc import PLV
+        from toolbox.dynamics import dynamic_fc, kuramoto_order
+
+    ## Folder structure - CLUSTER
+    else:
+        wd = "/home/t192/t192950/mpi/"
+        ctb_folder = wd + "CTB_data3/"
+        ctb_folderOLD = wd + "CTB_dataOLD/"
+
+        import sys
+        sys.path.append(wd)
+        from toolbox.fft import multitapper
+        from toolbox.signals import epochingTool
+        from toolbox.fc import PLV
+        from toolbox.dynamics import dynamic_fc, kuramoto_order
+
+
+    # Prepare simulation parameters
+    simLength = 10 * 1000  # ms
+    samplingFreq = 1000  # Hz
+    transient = 2000  # ms
+
+    for ii, set in enumerate(params_):
 
         tic = time.time()
-        print("Rank %i out of %i  ::  %i/%i" % (rank, size, ii + 1, len(coupling_vals)))
+        print("Rank %i out of %i  ::  %i/%i " % (rank, size, ii + 1, len(params_)))
+
+        print(set)
+        emp_subj, model, th, cer, g, pth, sigmath, pcx, sigmacx, r = set
 
         # STRUCTURAL CONNECTIVITY      #########################################
-        # Use "pass" for subcortical (thalamus) while "end" for cortex
-        # based on [https://groups.google.com/g/dsi-studio/c/-naReaw7T9E/m/7a-Y1hxdCAAJ]
         n2i_indexes = []  # not to include indexes
 
         # Thalamus structure
@@ -157,6 +132,14 @@ for mode, args in modes_dict.items():
                          'Temporal_Pole_Sup_R', 'Temporal_Mid_L', 'Temporal_Mid_R',
                          'Temporal_Pole_Mid_L', 'Temporal_Pole_Mid_R', 'Temporal_Inf_L',
                          'Temporal_Inf_R']
+        cingulum_rois = ['Frontal_Mid_2_L', 'Frontal_Mid_2_R',
+                         'Insula_L', 'Insula_R',
+                         'Cingulate_Ant_L', 'Cingulate_Ant_R', 'Cingulate_Post_L', 'Cingulate_Post_R',
+                         'Hippocampus_L', 'Hippocampus_R', 'ParaHippocampal_L',
+                         'ParaHippocampal_R', 'Amygdala_L', 'Amygdala_R',
+                         'Parietal_Sup_L', 'Parietal_Sup_R', 'Parietal_Inf_L',
+                         'Parietal_Inf_R', 'Precuneus_L', 'Precuneus_R',
+                         'Thalamus_L', 'Thalamus_R']
 
         # load text with FC rois; check if match SC
         FClabs = list(np.loadtxt(ctb_folder + "FCavg_" + emp_subj + "/roi_labels.txt", dtype=str))
@@ -165,27 +148,18 @@ for mode, args in modes_dict.items():
         SClabs = list(conn.region_labels)
         SC_cortex_idx = [SClabs.index(roi) for roi in cortical_rois]
 
+        # # Subset for Cingulum Bundle
+        # if "cb" in mode:
+        #     FC_cb_idx = [FClabs.index(roi) for roi in cingulum_rois]  # find indexes in FClabs that matches cortical_rois
+        #     SC_cb_idx = [SClabs.index(roi) for roi in cingulum_rois]  # find indexes in FClabs that matches cortical_rois
+        #     conn.weights = conn.weights[:, SC_cb_idx][SC_cb_idx]
+        #     conn.tract_lengths = conn.tract_lengths[:, SC_cb_idx][SC_cb_idx]
+        #     conn.region_labels = conn.region_labels[SC_cb_idx]
 
         # NEURAL MASS MODEL    #########################################################
 
         sigma_array = np.asarray([sigmath if 'Thal' in roi else sigmacx for roi in conn.region_labels])
-
-        if pcx == "MLR":
-            SC_Th_idx = [SClabs.index(roi) for roi in conn.region_labels if "Thal" in roi]
-
-            degree_fromth = np.sum(conn.weights[:, SC_Th_idx], axis=1)
-            degree_fromth_avg = np.average(np.sum(conn.weights[:, SC_Th_idx], axis=1))
-
-            degree = np.sum(conn.weights, axis=1)
-            degree_avg = np.average(degree)
-
-            p_array = 0.09 + g * (-0.0003 * (degree - degree_avg) + -0.003 * (degree_fromth - degree_fromth_avg))
-
-            p_array[SC_Th_idx] = pth
-
-        else:
-            p_array = np.asarray([pth if 'Thal' in roi else pcx for roi in conn.region_labels])
-
+        p_array = np.asarray([pth if 'Thal' in roi else pcx for roi in conn.region_labels])
 
         if model == "jrd":  # JANSEN-RIT-DAVID
             # Parameters edited from David and Friston (2003).
@@ -220,6 +194,7 @@ for mode, args in modes_dict.items():
             coup = coupling.SigmoidalJansenRit(a=np.array([g]), cmax=np.array([0.005]), midpoint=np.array([6]),
                                                r=np.array([0.56]))
 
+
         # OTHER PARAMETERS   ###
         # integrator: dt=T(ms)=1000/samplingFreq(kHz)=1/samplingFreq(HZ)
         # integrator = integrators.HeunStochastic(dt=1000/samplingFreq, noise=noise.Additive(nsig=np.array([5e-6])))
@@ -227,7 +202,7 @@ for mode, args in modes_dict.items():
 
         mon = (monitors.Raw(),)
 
-        print("Simulating %s (%is)  ||  PARAMS: g%i" % (model, simLength / 1000, g))
+        print("Simulating %s (%is)  ||  PARAMS: g%i sigma%0.2f" % (model, simLength / 1000, g, sigmath))
 
         # Run simulation
         sim = simulator.Simulator(model=m, connectivity=conn, coupling=coup, integrator=integrator, monitors=mon)
@@ -244,10 +219,15 @@ for mode, args in modes_dict.items():
         raw_time = output[0][0][transient:]
         regionLabels = conn.region_labels
 
+        # Save min/max(signal) for bifurcation
+        max_cx = np.average(np.array([max(signal) for i, signal in enumerate(raw_data) if "Thal" not in regionLabels[i]]))
+        min_cx = np.average(np.array([min(signal) for i, signal in enumerate(raw_data) if "Thal" not in regionLabels[i]]))
+        max_th = np.average(np.array([max(signal) for i, signal in enumerate(raw_data) if "Thal" in regionLabels[i]]))
+        min_th = np.average(np.array([min(signal) for i, signal in enumerate(raw_data) if "Thal" in regionLabels[i]]))
+
         # Extract signals of interest ## BE AWARE of the NOT
         # if "cb" not in mode:
         raw_data = raw_data[SC_cortex_idx, :]
-        regionLabels = conn.region_labels[SC_cortex_idx]
 
         # Saving in FFT results: coupling value, conduction speed, mean signal freq peak (Hz; module), all signals info.
         _, _, IAF, module, band_module = multitapper(raw_data, samplingFreq, regionLabels, peaks=True)
@@ -273,9 +253,22 @@ for mode, args in modes_dict.items():
                 efPhase.append(np.angle(analyticalSignal))
                 efEnvelope.append(np.abs(analyticalSignal))
 
+            # Check point
+            # from toolbox import timeseriesPlot, plotConversions
+            # regionLabels = conn.region_labels
+            # timeseriesPlot(raw_data, raw_time, regionLabels)
+            # plotConversions(raw_data[:,:len(efSignals[0][0])], efSignals[0], efPhase[0], efEnvelope[0],bands[0][b], regionLabels, 8, raw_time)
+
             # CONNECTIVITY MEASURES
             ## PLV
             plv = PLV(efPhase)
+            plv_m = np.average(plv)
+            plv_sd = np.std(plv)
+            # ## PLE - Phase Lag Entropy
+            # ## PLE parameters - Phase Lag Entropy
+            # tau_ = 25  # ms
+            # m_ = 3  # pattern size
+            # ple, patts = PLE(efPhase, tau_, m_, samplingFreq, subsampling=20)
 
             # Load empirical gexplore_data to make simple comparisons
             plv_emp = \
@@ -289,14 +282,34 @@ for mode, args in modes_dict.items():
             t1[1, :] = plv_emp[np.triu_indices(len(plv), 1)]
             plv_r = np.corrcoef(t1)[0, 1]
 
+            ## dynamical Functional Connectivity
+            # Sliding window parameters
+            window, step = 4, 2  # seconds
+
+            ## dFC
+            dFC = dynamic_fc(raw_data, samplingFreq, transient, window, step, "PLV")
+            dFC_m = np.average(dFC)
+            dFC_sd = np.std(dFC)
+
+            dFC_emp = np.loadtxt(ctb_folderOLD + "FC_" + emp_subj + "/" + bands[0][b] + "_dPLV4s.txt")
+
+            # Compare dFC vs dFC_emp
+            t2 = np.zeros(shape=(2, len(dFC) ** 2 // 2 - len(dFC) // 2))
+            t2[0, :] = dFC[np.triu_indices(len(dFC), 1)]
+            t2[1, :] = dFC_emp[np.triu_indices(len(dFC), 1)]
+            dFC_ksd = scipy.stats.kstest(dFC[np.triu_indices(len(dFC), 1)], dFC_emp[np.triu_indices(len(dFC), 1)])[0]
+
+            ## Metastability: Kuramoto Order Parameter
+            ko_std, ko_mean = kuramoto_order(raw_data, samplingFreq)
+            ko_emp = np.loadtxt(ctb_folderOLD + "FC_" + emp_subj + "/" + bands[0][b] + "_sdKO.txt")
 
             ## Gather results
-            result.append((emp_subj, model, th, cer, g, pth, sigmath, pcx, sigmacx, raw_data, raw_time, regionLabels, plv_r))
+            result.append(
+                (emp_subj, model, th, cer, g, pth, sigmath, pcx, sigmacx, r,
+                 min_cx, max_cx, min_th, max_th,
+                 IAF[0], module[0], band_module[0], bands[0][b],
+                 plv_r, dFC_ksd, ko_std, ko_emp, plv_m, plv_sd, dFC_m, dFC_sd))
 
         print("LOOP ROUND REQUIRED %0.3f seconds.\n\n" % (time.time() - tic,))
 
-    results_df = pd.DataFrame(np.asarray(result, dtype=object),
-                              columns=["subj", "model", "th", "cer", "g", "pth", "sigmath", "pcx", "sigmacx",
-                                       "signals", "time", "regionLabels", "rPLV"])
-    results_df.to_pickle("data/Criticality_" + mode + ".pkl")
-
+    return np.asarray(result, dtype=object)

@@ -64,9 +64,10 @@ coupling_vals = np.arange(0, 30, 0.5)  # 0.5
 
 ### MODE 1: th-noisy
 modes_dict = {"th_noisy": [subjects[0], "jr", "pTh", "pCer", 0.15, 0.22, 0.09, 0],
-              "th_noisy_phetero": [subjects[0], "jr", "pTh", "pCer", 0.15, 0.22, "p_arrays-allNEMOSm08d28y2022-t19h.26m.03s.pkl", 0],
+              "th_noisy_phetero": [subjects[0], "jr", "pTh", "pCer", 0.15, 0.22, "MLR", 0],
               "allnoisy": [subjects[0], "jr", "pTh", "pCer", 0.15, 0.22, 0.09, 0.22],
-              "classical": [subjects[0], "jr", "pTh", "pCer", 0.09, 0, 0.09, 0]}
+              "classical": [subjects[0], "jr", "pTh", "pCer", 0.09, 0, 0.09, 0],
+              "allnoisy_prebif": [subjects[0], "jr", "pTh", "pCer", 0.09, 0.022, 0.09, 0.022]}
 
 for mode, args in modes_dict.items():
 

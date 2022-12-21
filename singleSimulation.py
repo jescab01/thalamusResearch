@@ -14,7 +14,7 @@ import datetime
 
 ## Folder structure - Local
 if "LCCN_Local" in os.getcwd():
-    ctb_folder = "E:\\LCCN_Local\PycharmProjects\CTB_data2\\"
+    ctb_folder = "E:\\LCCN_Local\PycharmProjects\CTB_data3\\"
     import sys
     sys.path.append("E:\\LCCN_Local\\PycharmProjects\\")
     from toolbox.fft import multitapper
@@ -27,18 +27,18 @@ if "LCCN_Local" in os.getcwd():
 else:
     from toolbox import multitapper, PLV, epochingTool
     wd = "/home/t192/t192950/mpi/"
-    ctb_folder = wd + "CTB_data2/"
+    ctb_folder = wd + "CTB_data3/"
 
 
 ## Define working points per subject
 
 
 # Prepare simulation parameters
-simLength = 22 * 1000  # ms
+simLength = 10 * 1000  # ms
 samplingFreq = 1000  # Hz
 transient = 2000  # ms
 
-emp_subj, model, th, g, s = "NEMOS_035", "jr", "wpTh", 3, 15
+emp_subj, model, th, g, s = "NEMOS_035", "jr", "pTh", 15, 15
 
 tic = time.time()
 
@@ -98,10 +98,10 @@ SC_cortex_idx = [SClabs.index(roi) for roi in cortical_rois]
 
 
 # NEURAL MASS MODEL    #########################################################
-sigma_array = np.asarray([0.15 if 'Thal' in roi else 0 for roi in conn.region_labels])
-p_array = np.asarray([0.22 if 'Thal' in roi else 0.09 for roi in conn.region_labels])
-taui_sel = 10
-taui_array = np.asarray([taui_sel if 'Precentral' in roi else 20 for roi in conn.region_labels])
+sigma_array = np.asarray([100 if 'Thal' in roi else 0 for roi in conn.region_labels])
+p_array = np.asarray([0.15 if 'Thal' in roi else 0.09 for roi in conn.region_labels])
+# taui_sel = 10
+# taui_array = np.asarray([taui_sel if 'Precentral' in roi else 20 for roi in conn.region_labels])
 
 if model == "jrd":  # JANSEN-RIT-DAVID
 
@@ -127,7 +127,7 @@ if model == "jrd":  # JANSEN-RIT-DAVID
 else:  # JANSEN-RIT
     # Parameters from Stefanovski 2019. Good working point at g=33, s=15.5 on AAL2red connectome.
     m = JansenRit1995(He=np.array([3.25]), Hi=np.array([22]),
-                      tau_e=np.array([10]), tau_i=np.array([taui_array]),
+                      tau_e=np.array([10]), tau_i=np.array([20]),
                       c=np.array([1]), c_pyr2exc=np.array([135]), c_exc2pyr=np.array([108]),
                       c_pyr2inh=np.array([33.75]), c_inh2pyr=np.array([33.75]),
                       p=np.array([p_array]), sigma=np.array([sigma_array]),
@@ -146,26 +146,27 @@ integrator = integrators.HeunDeterministic(dt=1000 / samplingFreq)
 
 
 # Region mapping indices come from Brainstorm; change them to match SC indices.
-rm_pre = region_mapping.RegionMapping.from_file(ctb_folder + "tvbMonitor-EEG65_ICBM152_AAL2pth\\regionmapping-AAL2pth_toICBM152.txt")
-rm_post = region_mapping.RegionMapping.from_file(ctb_folder + "tvbMonitor-EEG65_ICBM152_AAL2pth\\regionmapping-AAL2pth_toICBM152.txt")
-# load text with FC rois; check if match SC
-FClabs = list(np.loadtxt(ctb_folder + "tvbMonitor-EEG65_ICBM152_AAL2pth\\roi_labels.txt", dtype=str))
-SC_fromFC_idx = [list(conn.region_labels).index(roi) if roi in conn.region_labels else "nan" for roi in FClabs]  # find indexes in FClabs that matches cortical_rois
+# rm_pre = region_mapping.RegionMapping.from_file(ctb_folder + "tvbMonitor-EEG65_ICBM152_AAL2pth\\regionmapping-AAL2pth_toICBM152.txt")
+# rm_post = region_mapping.RegionMapping.from_file(ctb_folder + "tvbMonitor-EEG65_ICBM152_AAL2pth\\regionmapping-AAL2pth_toICBM152.txt")
+# # load text with FC rois; check if match SC
+# FClabs = list(np.loadtxt(ctb_folder + "tvbMonitor-EEG65_ICBM152_AAL2pth\\roi_labels.txt", dtype=str))
+# SC_fromFC_idx = [list(conn.region_labels).index(roi) if roi in conn.region_labels else "nan" for roi in FClabs]  # find indexes in FClabs that matches cortical_rois
 
-for i, sc_idx in enumerate(SC_fromFC_idx):
-    rm_post.array_data[rm_pre.array_data == i] = sc_idx
-
-## update conn
-conn.region_labels=conn.region_labels[SC_fromFC_idx]
-conn.weights=conn.weights[:, SC_fromFC_idx][SC_fromFC_idx]
-conn.tract_lengths = conn.tract_lengths[:, SC_fromFC_idx][SC_fromFC_idx]
-conn.centres = conn.centres[SC_fromFC_idx]
-conn.cortical = conn.cortical[SC_fromFC_idx]
-
-pr = projections.ProjectionSurfaceEEG.from_file(ctb_folder + "tvbMonitor-EEG65_ICBM152_AAL2pth\\headmodel-ICBM152_toEEG65.mat")
-ss = sensors.SensorsEEG.from_file(source_file=ctb_folder + "tvbMonitor-EEG65_ICBM152_AAL2pth\\sensors-EEG65.txt")
-
-mon = (monitors.Raw(), monitors.EEG(projection=pr, sensors=ss, region_mapping=rm_post))
+# for i, sc_idx in enumerate(SC_fromFC_idx):
+#     rm_post.array_data[rm_pre.array_data == i] = sc_idx
+#
+# ## update conn
+# conn.region_labels=conn.region_labels[SC_fromFC_idx]
+# conn.weights=conn.weights[:, SC_fromFC_idx][SC_fromFC_idx]
+# conn.tract_lengths = conn.tract_lengths[:, SC_fromFC_idx][SC_fromFC_idx]
+# conn.centres = conn.centres[SC_fromFC_idx]
+# conn.cortical = conn.cortical[SC_fromFC_idx]
+#
+# pr = projections.ProjectionSurfaceEEG.from_file(ctb_folder + "tvbMonitor-EEG65_ICBM152_AAL2pth\\headmodel-ICBM152_toEEG65.mat")
+# ss = sensors.SensorsEEG.from_file(source_file=ctb_folder + "tvbMonitor-EEG65_ICBM152_AAL2pth\\sensors-EEG65.txt")
+#
+# mon = (monitors.Raw(), monitors.EEG(projection=pr, sensors=ss, region_mapping=rm_post))
+mon = (monitors.Raw(),)
 
 print("Simulating %s (%is)  ||  PARAMS: g%i s%i" % (model, simLength / 1000, g, s))
 
@@ -188,6 +189,6 @@ regionLabels = conn.region_labels
 
 ## Plot
 timeseries_spectra(raw_data, simLength, transient, regionLabels, mode="html", folder="figures",
-                       freqRange=[9, 13], opacity=1, title="taui"+str(taui_sel)+"_precentral", auto_open=True)
+                       freqRange=[1, 35], opacity=0.8, title="sigma10", auto_open=True)
 
 

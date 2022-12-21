@@ -61,9 +61,9 @@ structure_th = ["pTh", "Th", "woTh"]
 
 structure_cer = ["pCer"]
 
-coupling_vals = [1, 3, 5, 20, 40, 80]  # 0.5
+coupling_vals = [3, 7, 9, 40]  # 0.5
 
-params = [[subj, model, th, cer, g, 0.09, 0.022] for subj in subjects
+params = [[subj, model, th, cer, g, 0.09, 0.022, 0.09, 2.2e-8] for subj in subjects
           for model in models for th in structure_th for cer in structure_cer
           for g in coupling_vals]
 
@@ -82,7 +82,7 @@ transient = 4000  # ms
 #     print("Rank %i out of %i  ::  %i/%i " % (rank, size, ii + 1, len(params)))
 #
 #     print(set)
-#     emp_subj, model, th, cer, g, p, sigma = set
+#     emp_subj, model, th, cer, g, pth, sigmath, pcx, sigmacx = set
 #
 #     # STRUCTURAL CONNECTIVITY      #########################################
 #     # Use "pass" for subcortical (thalamus) while "end" for cortex
@@ -171,14 +171,14 @@ transient = 4000  # ms
 #
 #     # NEURAL MASS MODEL    #########################################################
 #
-#     sigma_array = np.asarray([sigma if 'Thal' in roi else 0 for roi in conn.region_labels])
+#     sigma_array = np.asarray([sigmath if 'Thal' in roi else sigmacx for roi in conn.region_labels])
 #
-#     if type(p) == str:
-#         table = pd.read_pickle(ctb_folder + p)
+#     if type(pcx) == str:
+#         table = pd.read_pickle(ctb_folder + pcx)
 #         p_array = table["p_array"].loc[(table["subject"] == emp_subj) & (table["th"] == th)].values[0]
 #
 #     else:
-#         p_array = np.asarray([p if 'Thal' in roi else 0.09 for roi in conn.region_labels])
+#         p_array = np.asarray([pth if 'Thal' in roi else pcx for roi in conn.region_labels])
 #
 #     if model == "jrd":  # JANSEN-RIT-DAVID
 #         # Parameters edited from David and Friston (2003).
@@ -221,7 +221,7 @@ transient = 4000  # ms
 #
 #     mon = (monitors.Raw(),)
 #
-#     print("Simulating %s (%is)  ||  PARAMS: g%i sigma%0.2f" % (model, simLength / 1000, g, sigma))
+#     print("Simulating %s (%is)  ||  PARAMS: g%i sigma%0.2f" % (model, simLength / 1000, g, sigmath))
 #
 #     # Run simulation
 #     sim = simulator.Simulator(model=m, connectivity=conn, coupling=coup, integrator=integrator, monitors=mon)
@@ -316,46 +316,51 @@ transient = 4000  # ms
 #         ko_emp = np.loadtxt(ctb_folderOLD + "FC_" + emp_subj + "/" + bands[0][b] + "_sdKO.txt")
 #
 #         ## Gather results
-#         result.append((emp_subj, model, th, cer, g, p, sigma, plv_r, dFC, dFC_emp, ko_std, ko_emp))
+#         result.append((emp_subj, model, th, cer, g, pth, sigmath, pcx, sigmacx, plv_r, dFC, dFC_emp, ko_std, ko_emp))
 #
 #     print("LOOP ROUND REQUIRED %0.3f seconds.\n\n" % (time.time() - tic,))
+#
+# results_df = pd.DataFrame(np.asarray(result, dtype=object), columns=["emp_subj", "model", "th", "cer", "g", "pth", "sigmath", "pcx", "sigmacx", "plv_r", "dFC", "dFC_emp", "ko_std", "ko_emp"])
+# results_df.to_pickle("data/KSDprebif_active3.pkl")
 
-# results_df = pd.DataFrame(np.asarray(result, dtype=object),
-#                           columns=["emp_subj", "model", "th", "cer", "g", "p", "sigma", "plv_r", "dFC", "dFC_emp", "ko_std", "ko_emp"])
-# results_df.to_pickle("data/KSDprebif_active2.pkl")
-
-results_df = pd.read_pickle("data/KSDprebif_active2.pkl")
+results_df = pd.read_pickle("data/KSDprebif_active3.pkl")
 
 # Calculate KSDs from gathered matrices
 ksds = []
 for j, th in enumerate(structure_th):
     for i, g in enumerate(coupling_vals):
         sub = results_df.loc[(results_df["th"] == th) & (results_df["g"]==g)]
-        ksds.append(scipy.stats.kstest(sub["dFC_emp"].values[0][np.triu_indices(len(sub["dFC_emp"].values[0]), 1)].flatten(),
+        ksds.append(scipy.stats.kstest(sub["dFC_emp"].values[0][np.triu_indices(len(sub["dFC"].values[0]), 1)].flatten(),
                                        sub["dFC"].values[0][np.triu_indices(len(sub["dFC"].values[0]), 1)].flatten())[0])
 
 
 ## PLOT results
-fig = make_subplots(rows=6, cols=3, column_titles=structure_th, shared_xaxes=True,
+fig = make_subplots(rows=4, cols=3, column_titles=structure_th, shared_xaxes=True, shared_yaxes=True,
                     row_titles=["g==" + str(g) for g in coupling_vals])
 
 for j, th in enumerate(structure_th):
     for i, g in enumerate(coupling_vals):
         sl = True if (j==0) & (i==0) else False
         sub = results_df.loc[(results_df["th"] == th) & (results_df["g"]==g)]
-        fig.add_trace(go.Histogram(x=sub["dFC_emp"].values[0][np.triu_indices(len(sub["dFC_emp"].values[0]), 1)].flatten(), marker_color="lightgreen",
-                                   name="empirical", legendgroup="empirical", showlegend=sl), row=i+1, col=j+1)
+        fig.add_trace(go.Histogram(x=sub["dFC_emp"].values[0][np.triu_indices(len(sub["dFC"].values[0]), 1)].flatten(), marker_color="lightgreen",
+                                   name="empirical", legendgroup="empirical", showlegend=sl, xbins=dict(size=0.01)), row=i+1, col=j+1)
         fig.add_trace(go.Histogram(x=sub["dFC"].values[0][np.triu_indices(len(sub["dFC"].values[0]), 1)].flatten(), marker_color="lightgray",
-                                   name="simulated", legendgroup="simulated", showlegend=sl), row=i+1, col=j+1)
+                                   name="simulated", legendgroup="simulated", showlegend=sl, xbins=dict(size=0.01)), row=i+1, col=j+1)
         text = "rPLV = " + str(round(sub.plv_r.values[0], 2)) + "<br>KSD = "+str(round(ksds[j*len(coupling_vals)+i], 3))
-        fig.add_annotation(x=0.3, y=100, text=text, showarrow=False, row=i+1, col=j+1)
+        fig.add_annotation(x=0.3, y=35, text=text, showarrow=False, row=i+1, col=j+1)
 
         # Overlay both histograms
         fig.update_layout(barmode='overlay', template="plotly_white",
                           xaxis16=dict(title="Pearson's r", range=[0, 1]),
                           xaxis17=dict(title="Pearson's r", range=[0, 1]),
-                          xaxis18=dict(title="Pearson's r", range=[0, 1]))
+                          xaxis18=dict(title="Pearson's r", range=[0, 1]),
+                          yaxis1=dict(range=[0, 50]),
+                          yaxis4=dict(range=[0, 50]),
+                          yaxis7=dict(range=[0, 50]),
+                          yaxis10=dict(range=[0, 50]),
+                          yaxis13=dict(range=[0, 50]),
+                          yaxis16=dict(range=[0, 50]))
         # Reduce opacity to see both histograms
         fig.update_traces(opacity=0.9)
-pio.write_html(fig, file="data/KSDprebif_active2.html", auto_open=True)
-pio.write_image(fig, file="data/KSDprebif_active2.svg", width=1000, height=700)
+pio.write_html(fig, file="data/KSDprebif_active3b.html", auto_open=True)
+pio.write_image(fig, file="data/KSDprebif_active3b.svg", width=1000, height=700)

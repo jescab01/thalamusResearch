@@ -57,7 +57,7 @@ def ThCer_parallel(params_):
         print("Rank %i out of %i  ::  %i/%i " % (rank, size, ii + 1, len(params_)))
 
         print(set)
-        emp_subj, model, th, cer, g, p, sigma, r = set
+        emp_subj, model, th, cer, g, pth, sigmath, pcx, sigmacx, r = set
 
         # STRUCTURAL CONNECTIVITY      #########################################
         # Use "pass" for subcortical (thalamus) while "end" for cortex
@@ -161,14 +161,14 @@ def ThCer_parallel(params_):
 
         # NEURAL MASS MODEL    #########################################################
 
-        sigma_array = np.asarray([sigma if 'Thal' in roi else 0 for roi in conn.region_labels])
+        sigma_array = np.asarray([sigmath if 'Thal' in roi else sigmacx for roi in conn.region_labels])
 
-        if type(p) == str:
-            table = pd.read_pickle(ctb_folder + p)
+        if type(pcx) == str:
+            table = pd.read_pickle(ctb_folder + pcx)
             p_array = table["p_array"].loc[(table["subject"] == emp_subj) & (table["th"] == th)].values[0]
 
         else:
-            p_array = np.asarray([p if 'Thal' in roi else 0.09 for roi in conn.region_labels])
+            p_array = np.asarray([pth if 'Thal' in roi else pcx for roi in conn.region_labels])
 
         if model == "jrd":  # JANSEN-RIT-DAVID
             # Parameters edited from David and Friston (2003).
@@ -211,7 +211,7 @@ def ThCer_parallel(params_):
 
         mon = (monitors.Raw(),)
 
-        print("Simulating %s (%is)  ||  PARAMS: g%i sigma%0.2f" % (model, simLength / 1000, g, sigma))
+        print("Simulating %s (%is)  ||  PARAMS: g%i sigma%0.2f" % (model, simLength / 1000, g, sigmath))
 
         # Run simulation
         sim = simulator.Simulator(model=m, connectivity=conn, coupling=coup, integrator=integrator, monitors=mon)
@@ -313,7 +313,7 @@ def ThCer_parallel(params_):
 
             ## Gather results
             result.append(
-                (emp_subj, model, th, cer, g, p, sigma, r,
+                (emp_subj, model, th, cer, g, pth, sigmath, pcx, sigmacx, r,
                  min_cx, max_cx, min_th, max_th,
                  IAF[0], module[0], band_module[0], bands[0][b],
                  plv_r, dFC_ksd, ko_std, ko_emp))

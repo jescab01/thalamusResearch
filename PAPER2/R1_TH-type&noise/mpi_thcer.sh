@@ -1,9 +1,9 @@
 #!/bin/bash
 ##----------------------- Start job description -----------------------
 #SBATCH --partition=standard
-#SBATCH --job-name=sigmacx
-#SBATCH --ntasks=600
-#SBATCH --time=01:00:00
+#SBATCH --job-name=r1JR0.022std
+#SBATCH --ntasks=300
+#SBATCH --time=03:00:00
 #SBATCH --mem-per-cpu=4G
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=F_r_e@hotmail.es

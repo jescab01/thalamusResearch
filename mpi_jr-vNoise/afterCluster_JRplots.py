@@ -11,21 +11,21 @@ import plotly.express as px
 
 
 # Define PSE folder
-main_folder = 'E:\\LCCN_Local\PycharmProjects\\thalamusResearch\mpi_jr\PSE\\'
-simulations_tag = "PSEmpi_adjustingrange_allnodesNoise_v2-m11d16y2022-t07h.36m.06s"  # Tag cluster job
+main_folder = 'E:\\LCCN_Local\PycharmProjects\\thalamusResearch\mpi_jr-vNoise\PSE\\'
+simulations_tag = "PSEmpi_adjustingrange_allnodesNoise_v2-m12d19y2022-t10h.05m.39s"  # Tag cluster job
 df = pd.read_csv(main_folder + simulations_tag + "/results.csv")
 
 structure_th = ["woTh", "Th", "pTh"]
-structure_cer = ["woCer", "Cer", "pCer"]
+structure_cer = ["pCer"]
 
 # Average out repetitions
-df_avg = df.groupby(["subject", "model", "th", "cer", "g", "sigma"]).mean().reset_index()
+df_avg = df.groupby(["subject", "model", "th", "cer", "g", "sigmacx"]).mean().reset_index()
 
 
 # TODO you need to take a look on the parameter spaces; don't pass without it.
 
 ## Plot paramSpaces
-x_type="log"
+x_type="linear"
 for subject in list(set(df_avg.subject)):
 
     title = subject + "_paramSpace_bif"
@@ -42,22 +42,22 @@ for subject in list(set(df_avg.subject)):
         sl = True if j == 0 else False
 
         fig.add_trace(
-            go.Heatmap(z=subset.rPLV, x=subset.sigma, y=subset.g, colorscale='RdBu', reversescale=True,
+            go.Heatmap(z=subset.rPLV, x=subset.sigmacx, y=subset.g, colorscale='RdBu', reversescale=True,
                        zmin=-0.5, zmax=0.5, showscale=False, colorbar=dict(thickness=7)),
             row=(1 + j), col=1)
 
         fig.add_trace(
-            go.Heatmap(z=subset.max_cx - subset.min_cx, x=subset.sigma, y=subset.g, colorscale='Viridis',
+            go.Heatmap(z=subset.max_cx - subset.min_cx, x=subset.sigmacx, y=subset.g, colorscale='Viridis',
                        showscale=sl, colorbar=dict(thickness=7), zmin=0, zmax=0.14),
             row=(1 + j), col=2)
 
         fig.add_trace(
-            go.Heatmap(z=subset.max_th - subset.min_th, x=subset.sigma, y=subset.g, colorscale='Viridis',
+            go.Heatmap(z=subset.max_th - subset.min_th, x=subset.sigmacx, y=subset.g, colorscale='Viridis',
                        showscale=sl, colorbar=dict(thickness=7), zmin=0, zmax=0.14),
             row=(1 + j), col=3)
 
         fig.add_trace(
-            go.Heatmap(z=subset.IAF, x=subset.sigma, y=subset.g, colorscale='Plasma',
+            go.Heatmap(z=subset.IAF, x=subset.sigmacx, y=subset.g, colorscale='Plasma',
                        showscale=False, colorbar=dict(thickness=7)),
             row=(1 + j), col=4)
 
