@@ -3,6 +3,7 @@ import os
 
 import pandas as pd
 import time
+import numpy as np
 
 import plotly.graph_objects as go  # for gexplore_data visualisation
 import plotly.io as pio
@@ -11,63 +12,57 @@ import plotly.express as px
 
 
 # Define PSE folder
-main_folder = 'E:\\LCCN_Local\PycharmProjects\\thalamusResearch\mpi_jr-vNoise\PSE\\'
-simulations_tag = "PSEmpi_adjustingrange_allnodesNoise_v2-m12d19y2022-t10h.05m.39s"  # Tag cluster job
+main_folder = 'E:\\LCCN_Local\PycharmProjects\\thalamusResearch\PAPER2\R4.supp_sigmaAll\\'
+simulations_tag = "PSEmpi_adjustingrange_allnodesNoise_v2-m01d03y2023-t15h.35m.11s"  # Tag cluster job
 df = pd.read_csv(main_folder + simulations_tag + "/results.csv")
 
-structure_th = ["woTh", "Th", "pTh"]
-structure_cer = ["pCer"]
-
 # Average out repetitions
-df_avg = df.groupby(["subject", "model", "th", "cer", "g", "sigmacx"]).mean().reset_index()
+df_avg = df.groupby(["subject", "model", "th", "cer", "g", "pth", "sigmath", "pcx", "sigmacx"]).mean().reset_index()
 
-
-# TODO you need to take a look on the parameter spaces; don't pass without it.
+mask = (df_avg.sigmath == df_avg.sigmacx).values
 
 ## Plot paramSpaces
-x_type="log"
-for subject in list(set(df_avg.subject)):
+x_type = "log"
 
-    title = subject + "_paramSpace_bif"
 
-    fig = make_subplots(rows=3, cols=4,
-                        row_titles=("woTh", "Th", "pTh"),
-                        specs=[[{}, {}, {}, {}], [{}, {}, {}, {}], [{}, {}, {}, {}]],
-                        column_titles=["rPLV", "bifs_cx<br>(signals min-max)", "bifs_th<br>(signals min-max)", "FFTpeak"], x_title="Noise (std)",
-                        shared_yaxes=True, shared_xaxes=True, y_title="Coupling factor (g)")
+fig = make_subplots(rows=2, cols=4,
+                    row_titles=("Equal nodes", "Thalamus + sigmacx"),
+                    column_titles=["rPLV", "bifs_cx<br>(signals min-max)", "bifs_th<br>(signals min-max)", "FFTpeak"], x_title="Noise (std)",
+                    shared_yaxes=True, shared_xaxes=True, y_title="Coupling factor (g)")
 
-    for j, th in enumerate(structure_th):
-        subset = df_avg.loc[(df_avg["subject"] == subject) & (df_avg["th"] == th)]
+for j in range(2):
 
-        sl = True if j == 0 else False
+    subset = df_avg.loc[mask] if j == 0 else df_avg.loc[np.invert(mask)]
 
-        fig.add_trace(
-            go.Heatmap(z=subset.rPLV, x=subset.sigmacx, y=subset.g, colorscale='RdBu', reversescale=True,
-                       zmin=-0.5, zmax=0.5, showscale=False, colorbar=dict(thickness=7)),
-            row=(1 + j), col=1)
+    sl = True if j == 0 else False
 
-        fig.add_trace(
-            go.Heatmap(z=subset.max_cx - subset.min_cx, x=subset.sigmacx, y=subset.g, colorscale='Viridis',
-                       showscale=sl, colorbar=dict(thickness=7), zmin=0, zmax=0.14),
-            row=(1 + j), col=2)
+    fig.add_trace(
+        go.Heatmap(z=subset.rPLV, x=subset.sigmacx, y=subset.g, colorscale='RdBu', reversescale=True,
+                   zmin=-0.5, zmax=0.5, showscale=False, colorbar=dict(thickness=7)),
+        row=(1 + j), col=1)
 
-        fig.add_trace(
-            go.Heatmap(z=subset.max_th - subset.min_th, x=subset.sigmacx, y=subset.g, colorscale='Viridis',
-                       showscale=sl, colorbar=dict(thickness=7), zmin=0, zmax=0.14),
-            row=(1 + j), col=3)
+    fig.add_trace(
+        go.Heatmap(z=subset.max_cx - subset.min_cx, x=subset.sigmacx, y=subset.g, colorscale='Viridis',
+                   showscale=sl, colorbar=dict(thickness=7), zmin=0, zmax=0.14),
+        row=(1 + j), col=2)
 
-        fig.add_trace(
-            go.Heatmap(z=subset.IAF, x=subset.sigmacx, y=subset.g, colorscale='Plasma',
-                       showscale=False, colorbar=dict(thickness=7)),
-            row=(1 + j), col=4)
+    fig.add_trace(
+        go.Heatmap(z=subset.max_th - subset.min_th, x=subset.sigmacx, y=subset.g, colorscale='Viridis',
+                   showscale=sl, colorbar=dict(thickness=7), zmin=0, zmax=0.14),
+        row=(1 + j), col=3)
 
-    fig.update_layout(title_text=title, xaxis1=dict(type=x_type), xaxis2=dict(type=x_type),
-                      xaxis3=dict(type=x_type),
-                      xaxis4=dict(type=x_type), xaxis5=dict(type=x_type), xaxis6=dict(type=x_type),
-                      xaxis7=dict(type=x_type), xaxis8=dict(type=x_type), xaxis9=dict(type=x_type),
-                      xaxis10=dict(type=x_type), xaxis11=dict(type=x_type), xaxis12=dict(type=x_type))
+    fig.add_trace(
+        go.Heatmap(z=subset.IAF, x=subset.sigmacx, y=subset.g, colorscale='Plasma',
+                   showscale=False, colorbar=dict(thickness=7)),
+        row=(1 + j), col=4)
 
-    pio.write_html(fig, file=main_folder + simulations_tag + "/" + title + "-g&sigma_nbif.html", auto_open=True)
+fig.update_layout(xaxis1=dict(type=x_type), xaxis2=dict(type=x_type),
+                  xaxis3=dict(type=x_type),
+                  xaxis4=dict(type=x_type), xaxis5=dict(type=x_type), xaxis6=dict(type=x_type),
+                  xaxis7=dict(type=x_type), xaxis8=dict(type=x_type), xaxis9=dict(type=x_type),
+                  xaxis10=dict(type=x_type), xaxis11=dict(type=x_type), xaxis12=dict(type=x_type))
+
+pio.write_html(fig, file=main_folder + simulations_tag + "/FIG4supp_sigmaAll.html", auto_open=True)
 
 
 

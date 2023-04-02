@@ -36,9 +36,9 @@ else:
 # Prepare simulation parameters
 simLength = 10 * 1000  # ms
 samplingFreq = 1000  # Hz
-transient = 2000  # ms
+transient =0 # ms
 
-emp_subj, model, th, g, s = "NEMOS_035", "jr", "pTh", 15, 15
+emp_subj, model, th, g, s = "NEMOS_035", "jr", "pTh", 2, 15
 
 tic = time.time()
 
@@ -98,8 +98,8 @@ SC_cortex_idx = [SClabs.index(roi) for roi in cortical_rois]
 
 
 # NEURAL MASS MODEL    #########################################################
-sigma_array = np.asarray([100 if 'Thal' in roi else 0 for roi in conn.region_labels])
-p_array = np.asarray([0.15 if 'Thal' in roi else 0.09 for roi in conn.region_labels])
+sigma_array = np.asarray([0 if 'Thal' in roi else 0 for roi in conn.region_labels])
+p_array = np.asarray([0.09 if 'Thal' in roi else 0.09 for roi in conn.region_labels])
 # taui_sel = 10
 # taui_array = np.asarray([taui_sel if 'Precentral' in roi else 20 for roi in conn.region_labels])
 
@@ -188,7 +188,7 @@ regionLabels = conn.region_labels
 
 
 ## Plot
-timeseries_spectra(raw_data, simLength, transient, regionLabels, mode="html", folder="figures",
+timeseries_spectra(raw_data, simLength, transient, regionLabels, mode="svg", folder="figures",
                        freqRange=[1, 35], opacity=0.8, title="sigma10", auto_open=True)
 
 

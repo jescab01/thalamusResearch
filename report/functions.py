@@ -416,7 +416,7 @@ def plv_dplv(plv, dplv, regionLabels, transient=None, step=2, mode="html", folde
         plotly.offline.iplot(fig)
 
 
-def simulate(emp_subj, model, g, g_wc=None, p_th=0.15, sigma=0.22, th='pTh', cer='pCer', t=10, stimulate=False, mode="sim", verbose=True):
+def simulate(emp_subj, model, g, g_wc=None, pth=0.15, sigmath=0.22, pcx=0.09, sigmacx=0, p_array=None, th='pTh', cer='pCer', t=10, stimulate=False, mode="sim", verbose=True):
 
     ctb_folder = "E:\\LCCN_Local\PycharmProjects\CTB_data3\\"
     ctb_folderOLD = "E:\\LCCN_Local\PycharmProjects\CTB_dataOLD\\"
@@ -523,27 +523,28 @@ def simulate(emp_subj, model, g, g_wc=None, p_th=0.15, sigma=0.22, th='pTh', cer
 
     #   NEURAL MASS MODEL  &  COUPLING FUNCTION   #########################################################
 
-    sigma_array = np.asarray([sigma if 'Thal' in roi else 0 for roi in conn.region_labels])
+    sigma_array = np.asarray([sigmath if 'Thal' in roi else sigmacx for roi in conn.region_labels])
 
-    if p_th == "MLR":
-        SC_Th_idx = [SClabs.index(roi) for roi in conn.region_labels if "Thal" in roi]
+    if p_array is None:
+        if pcx == "MLR":
+            SC_Th_idx = [SClabs.index(roi) for roi in conn.region_labels if "Thal" in roi]
 
-        degree_fromth = np.sum(conn.weights[:, SC_Th_idx], axis=1)
-        degree_fromth_avg = np.average(np.sum(conn.weights[:, SC_Th_idx], axis=1))
+            degree_fromth = np.sum(conn.weights[:, SC_Th_idx], axis=1)
+            degree_fromth_avg = np.average(np.sum(conn.weights[:, SC_Th_idx], axis=1))
 
-        degree = np.sum(conn.weights, axis=1)
-        degree_avg = np.average(degree)
+            degree = np.sum(conn.weights, axis=1)
+            degree_avg = np.average(degree)
 
-        p_array = 0.09 + g * (-0.0003 * (degree - degree_avg) + -0.003 * (degree_fromth - degree_fromth_avg))
+            p_array = 0.09 + g * (-0.0003 * (degree - degree_avg) + -0.003 * (degree_fromth - degree_fromth_avg))
 
-        p_array[SC_Th_idx] = 0.15
+            p_array[SC_Th_idx] = pth
 
-    elif type(p_th) == str:
-        table = pd.read_pickle(ctb_folder + p_th)
+        else:
+            p_array = np.asarray([pth if 'Thal' in roi else pcx for roi in conn.region_labels])
+
+    elif type(p_array) == str:
+        table = pd.read_pickle(ctb_folder + p_array)
         p_array = table["p_array"].loc[(table["subject"] == emp_subj) & (table["th"] == th)].values[0]
-
-    else:
-        p_array = np.asarray([p_th if 'Thal' in roi else 0.09 for roi in conn.region_labels])
 
 
     if model == "jrd":  # JANSEN-RIT-DAVID
@@ -620,7 +621,7 @@ def simulate(emp_subj, model, g, g_wc=None, p_th=0.15, sigma=0.22, th='pTh', cer
 
     mon = (monitors.Raw(),)
     if verbose:
-        print("Simulating %s (%is)  ||  PARAMS: g%i sigma%0.2f" % (model, simLength / 1000, g, sigma))
+        print("Simulating %s (%is)  ||  PARAMS: g%i sigma%0.2f" % (model, simLength / 1000, g, sigmath))
 
     # Run simulation
     if stimulate:
@@ -1298,7 +1299,7 @@ def configure_states(stim_type, gain, nstates, tstates, pinclusion, conn, simLen
     return stimulus
 
 
-def p_adjust(emp_subj, th, g, iterations=50, report=True, output=None, plotmode="html", folder="figures"):
+def p_adjust(emp_subj, th, g, p_th=0.15, sigma=0.15, p_cx=0.09, iterations=50, report=True, output=None, plotmode="html", folder="figures"):
 
     ctb_folder = "E:\\LCCN_Local\PycharmProjects\CTB_data3\\"
 
@@ -1365,11 +1366,11 @@ def p_adjust(emp_subj, th, g, iterations=50, report=True, output=None, plotmode=
     else:
 
         # Initial p_array and init simulation
-        p_array_init = np.asarray([0.15 if 'Thal' in roi else 0.09 for roi in conn.region_labels])
+        p_array_init = np.asarray([p_th if 'Thal' in roi else p_cx for roi in conn.region_labels])
         p_array = p_array_init.copy()
 
         signals_init, timepoints_init, regionLabels = \
-            simulate(emp_subj, "jr", g=g, p_array=p_array_init, sigma=0.22, th=th, t=6, mode="pHetero", verbose=False)
+            simulate(emp_subj, "jr", g=g, p_array=p_array_init, sigma=sigma, th=th, t=6, mode="pHetero", verbose=False)
 
         signals = signals_init.copy()
 
@@ -1396,7 +1397,7 @@ def p_adjust(emp_subj, th, g, iterations=50, report=True, output=None, plotmode=
                 p_array[SC_notTh_idx] = ps_cx - diffs
 
                 signals, timepoints, regionLabels = \
-                    simulate(emp_subj, "jr", g=g, p_array=p_array, sigma=0.22, th=th, t=6, mode="pHetero", verbose=False)
+                    simulate(emp_subj, "jr", g=g, p_array=p_array, sigma=sigma, th=th, t=6, mode="pHetero", verbose=False)
 
                 results.append([glob_diff, i])
 
@@ -1413,37 +1414,47 @@ def p_adjust(emp_subj, th, g, iterations=50, report=True, output=None, plotmode=
         degree_avg = np.average(degree)
 
         if report:
-            fig = make_subplots(rows=3, cols=2, specs=[[{}, {}], [{"colspan": 2}, {}], [{}, {}]],
-                                subplot_titles=["Signals - Pre", "Signals - Post", "Adjust process", "", "Corr w/ indegree", "Corr w/ th inputs"])
+            fig = make_subplots(rows=3, cols=2, specs=[[{}, {}], [{"colspan": 2}, {}], [{}, {}]], horizontal_spacing=0.15,
+                                subplot_titles=["Signals - Pre", "Signals - Post", "Gradient descent error", "", "Corr w/ indegree", "Corr w/ th inputs"])
 
-            # plot all signals
-            for ii in SC_notTh_idx:
+            cmap = px.colors.qualitative.Plotly
+            for c, ii in enumerate(SC_notTh_idx[::10]):
                 # Timeseries
-                fig.add_trace(go.Scatter(x=timepoints/1000, y=signals_init[ii, :], name=regionLabels[ii],
-                                         legendgroup=regionLabels[ii]), row=1, col=1)
+                fig.add_trace(go.Scatter(x=timepoints / 1000, y=signals_init[ii, :], name=regionLabels[ii],
+                                         legendgroup=regionLabels[ii], mode="lines",
+                                         line=dict(color=cmap[c % len(cmap)])), row=1, col=1)
                 # Timeseries
-                fig.add_trace(go.Scatter(x=timepoints/1000, y=signals[ii, :], name=regionLabels[ii],
-                                         legendgroup=regionLabels[ii], showlegend=False), row=1, col=2)
+                fig.add_trace(go.Scatter(x=timepoints / 1000, y=signals[ii, :], name=regionLabels[ii],
+                                         legendgroup=regionLabels[ii], mode="lines",
+                                         line=dict(color=cmap[c % len(cmap)]), showlegend=False), row=1, col=2)
 
-            fig.add_trace(go.Scatter(x=results[:, 1], y=results[:, 0], showlegend=False), row=2, col=1)
+            # PLOT Gradient descent error
+            fig.add_trace(go.Scatter(x=results[:, 1], y=results[:, 0], showlegend=False, line=dict(color="black")),
+                          row=2, col=1)
 
+            # PLOT connections vs p_array
             fig.add_trace(go.Scatter(x=np.sum(conn.weights[SC_notTh_idx], axis=1), y=p_array[SC_notTh_idx],
-                                         mode="markers", showlegend=False), row=3, col=1)
+                                     mode="markers", marker=dict(color="darkgray", opacity=0.6), showlegend=False),
+                          row=3, col=1)
 
             # PLOT connections to thalamus vs p_array
-            fig.add_trace(go.Scatter(x=np.sum(conn.weights[SC_notTh_idx, :][:, SC_Th_idx], axis=1), y=p_array[SC_notTh_idx],
-                            mode="markers", showlegend=False), row=3, col=2)
+            SC_Th_idx = [SClabs.index(roi) for roi in conn.region_labels if "Thal" in roi]
+            fig.add_trace(
+                go.Scatter(x=np.sum(conn.weights[SC_notTh_idx, :][:, SC_Th_idx], axis=1), y=p_array[SC_notTh_idx],
+                           mode="markers", marker=dict(color="darkgray", opacity=0.6), showlegend=False), row=3, col=2)
 
-            fig.update_layout(template="plotly_white", title="PrePost and Report _ " + emp_subj + " | " + th + " | g" + str(g),
+            fig.update_layout(template="plotly_white", legend=dict(tracegroupgap=1, y=1.05), width=1000, height=900,
                               xaxis1=dict(title="Time (ms)"), yaxis1=dict(title="Voltage (mV)"),
-                              xaxis3=dict(title="Tteration"), yaxis3=dict(title="Global difference<br>of signals' means"),
-                              xaxis5=dict(title="Node indegree"), yaxis5=dict(title="adjusted p"),
-                              xaxis6=dict(title="Node indegree (from thalamus)"))
+                              xaxis2=dict(title="Time (ms)"), yaxis2=dict(title="Voltage (mV)"),
+                              xaxis3=dict(title="Iteration"),
+                              yaxis3=dict(title=r"$\sum_{i=1}^{N} |\overline{s_i} - \overline{S}|$"),
+                              xaxis5=dict(title="Node indegree"), yaxis5=dict(title=r"$p_{\neq th} \text{ adjusted}$"),
+                              xaxis6=dict(title="Node indegree (from thalamus)"),
+                              yaxis6=dict(title=r"$p_{\neq th} \text{ adjusted}$"))
 
-
-            pio.write_html(fig, file=folder + "prepostReport_" + emp_subj + "_" + th + "_g" + str(g) + ".html", auto_open=False)
-            # elif "inline" in plotmode:
-            #     plotly.offline.iplot(fig)
+            pio.write_image(fig, file=folder + "prepostGD_" + emp_subj + "_" + th + "_g" + str(g) + ".svg")
+            pio.write_html(fig, file=folder + "prepostGD_" + emp_subj + "_" + th + "_g" + str(g) + ".html",
+                           auto_open=False, include_mathjax="cdn")
 
         return p_array, signals, p_array_init, signals_init, timepoints, regionLabels, \
                degree, degree_avg, degree_fromth, degree_fromth_avg, results

@@ -3,7 +3,7 @@
 #SBATCH --partition=standard
 #SBATCH --job-name=JRnoise
 #SBATCH --ntasks=300
-#SBATCH --time=08:00:00
+#SBATCH --time=10:00:00
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=F_r_e@hotmail.es
 #SBATCH --error=logs/err-%j.log

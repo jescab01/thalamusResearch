@@ -11,15 +11,11 @@ import plotly.express as px
 
 # Load and plot already computed simulations.
 data_folder = "E:\LCCN_Local\PycharmProjects\\thalamusResearch\PAPER\R4.3_phetero-cx\data\\"
-simulation_tag = "pHetero-SUBJECTs_m11d23y2022-t19h.18m.27s\\"
-with open(data_folder + simulation_tag + ".1pHeteroGD_FULL-SUBJECTS.pkl", "rb") as input_file:
+simulation_tag = "pHetero-SUBJECTs_m12d08y2022-t11h.19m.24s\\"
+with open(data_folder + simulation_tag + ".1pHeteroFULL-SUBJECTS.pkl", "rb") as input_file:
     full_results = pickle.load(input_file)
 
 ctb_folder = "E:\\LCCN_Local\PycharmProjects\CTB_data3\\"
-plot_folder = data_folder + simulation_tag + "\\1prepostGD\\"
-
-if not os.path.isdir(plot_folder):
-    os.mkdir(plot_folder)
 
 
 for emp_subj, th, g, output in full_results:
@@ -45,7 +41,6 @@ for emp_subj, th, g, output in full_results:
     SClabs = list(conn.region_labels)
     SC_notTh_idx = [SClabs.index(roi) for roi in conn.region_labels if "Thal" not in roi]
 
-
     p_array, signals, p_array_init, signals_init, timepoints, regionLabels, degree, degree_avg, degree_fromth, degree_fromth_avg, results = output
 
     cmap = px.colors.qualitative.Plotly
@@ -55,11 +50,11 @@ for emp_subj, th, g, output in full_results:
     # plot all signals
     for c, ii in enumerate(SC_notTh_idx[::10]):
         # Timeseries
-        fig.add_trace(go.Scatter(x=timepoints / 1000, y=signals_init[ii, :], name=regionLabels[ii],
-                                 legendgroup=regionLabels[ii], mode="lines", line=dict(color=cmap[c%len(cmap)])), row=1, col=1)
+        fig.add_trace(go.Scatter(x=timepoints / 1000, y=signals_init[ii, :], name=regionLabels[ii], opacity=0.8,
+                                 legendgroup=regionLabels[ii], mode="lines", line=dict(color=cmap[c%len(cmap)], width=1)), row=1, col=1)
         # Timeseries
-        fig.add_trace(go.Scatter(x=timepoints / 1000, y=signals[ii, :], name=regionLabels[ii],
-                                 legendgroup=regionLabels[ii], mode="lines", line=dict(color=cmap[c%len(cmap)]), showlegend=False), row=1, col=2)
+        fig.add_trace(go.Scatter(x=timepoints / 1000, y=signals[ii, :], name=regionLabels[ii], opacity=0.8,
+                                 legendgroup=regionLabels[ii], mode="lines", line=dict(color=cmap[c%len(cmap)], width=1), showlegend=False), row=1, col=2)
 
     # PLOT Gradient descent error
     fig.add_trace(go.Scatter(x=results[:, 1], y=results[:, 0], showlegend=False, line=dict(color="black")), row=2, col=1)
@@ -80,7 +75,7 @@ for emp_subj, th, g, output in full_results:
                       xaxis5=dict(title="Node indegree"), yaxis5=dict(title=r"$p_{\neq th} \text{ adjusted}$"),
                       xaxis6=dict(title="Node indegree (from thalamus)"), yaxis6=dict(title=r"$p_{\neq th} \text{ adjusted}$"))
 
-    pio.write_image(fig, file=plot_folder + "prepostGD_" + emp_subj + "_" + th + "_g" + str(g) + ".svg")
-    pio.write_html(fig, file=plot_folder + "prepostGD_" + emp_subj + "_" + th + "_g" + str(g) + ".html",
+    pio.write_image(fig, file=data_folder + simulation_tag + "prepostGD_" + emp_subj + "_" + th + "_g" + str(g) + ".svg")
+    pio.write_html(fig, file= data_folder + simulation_tag + "prepostGD_" + emp_subj + "_" + th + "_g" + str(g) + ".html",
                    auto_open=False, include_mathjax="cdn")
 

@@ -26,7 +26,7 @@ for emp_subj in subjects:
 
             print("\n%s | %s | g%0.2f" % (emp_subj, th, g))
 
-            out = p_adjust(emp_subj, th, g=g,  iterations=40, report=True, plotmode=["html"], folder=specific_folder)
+            out = p_adjust(emp_subj, th, g=g, p_th=0.15, sigma=0.15, p_cx=0.09, iterations=40, report=True, plotmode=["html"], folder=specific_folder)
 
             p_array, signals, p_array_init, signals_init, timepoints, regionLabels, degree, degree_avg, degree_fromth, degree_fromth_avg, results = out
 
@@ -34,13 +34,13 @@ for emp_subj in subjects:
             with open(specific_folder + "pHetero_%s_%s_g%s.pkl" % (emp_subj, th, str(g)), "wb") as file:
                 pickle.dump([emp_subj, th, g, out], file)
 
-            temp_tbl = [[emp_subj, th, g, 0.09, 0.15, p_array[i], degree[i], degree_avg, degree_fromth[i], degree_fromth_avg, roi]
+            temp_tbl = [[emp_subj, th, g, 0.09, 0.15, 0.15, p_array[i], degree[i], degree_avg, degree_fromth[i], degree_fromth_avg, roi]
                         for i, roi in enumerate(regionLabels) if "Thal" not in roi]
 
             table = table + temp_tbl
 
 # Save table for simulations
-table = pd.DataFrame(table, columns=["subject", "th", "g", "initpcx", "sigma", "p_adjusted", "degree",
+table = pd.DataFrame(table, columns=["subject", "th", "g", "initpcx", "pth", "sigma", "p_adjusted", "degree",
                                      "degree_avg", "degree_fromth", "degree_fromth_avg", "roi"])
 
 pd.to_pickle(table, specific_folder + ".1pHeteroTABLE-SUBJECTS.pkl")
@@ -48,8 +48,7 @@ pd.to_pickle(table, specific_folder + ".1pHeteroTABLE-SUBJECTS.pkl")
 
 
 ## Merge all pkls in one large file
-
-specific_folder = "E:\LCCN_Local\PycharmProjects\\thalamusResearch\PAPER\R4.3_phetero-cx\data\pHetero-SUBJECTs_m11d23y2022-t19h.18m.27s\\"
+# specific_folder = "E:\LCCN_Local\PycharmProjects\\thalamusResearch\PAPER\R4.3_phetero-cx\data\pHetero-SUBJECTs_m12d08y2022-t11h.19m.24s\\"
 
 output = []
 for emp_subj in subjects:

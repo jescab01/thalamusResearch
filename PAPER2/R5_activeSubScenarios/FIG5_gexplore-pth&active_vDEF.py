@@ -39,7 +39,8 @@ opacity = 0.7
 c4, c5 = "gray", "dimgray" #cmap_s2[-1], cmap_p2[-1]
 
 ##       FIGURE     ##################
-sp_titles = ["", "Scenario 1b", "Scenario 1c", "Scenario 1d", "Scenario 1e"] + [""]*5*3
+sp_titles = ["", r"$p_{th}=0.15; \eta_{th}=0.022$", r"$p_{th}=0.12; \eta_{th}=0.022$",
+             r"$p_{th}=0.15; \eta_{th}=0.09$", r"$p_{th}=0.15; \eta_{th}=0.5$"] + [""]*5*3
 sp_titles[10]="Empirical"
 fig = make_subplots(rows=4, cols=5, shared_yaxes=False, horizontal_spacing=0.065,
                     specs=[[{}] + [{"secondary_y": True}]*4,[{}] + [{"secondary_y": True}]*4, [{}, {}, {}, {}, {}], [{}, {}, {}, {}, {}]],
@@ -108,7 +109,7 @@ fig.add_trace(go.Heatmap(z=dFC_emp, x=np.arange(transient/1000, len(dFC_emp) * s
 
 # Update layout
 fig.update_layout(legend=dict(orientation="h", yanchor="top", y=1.15, xanchor="center", x=0.55, tracegroupgap=10),
-                  template="plotly_white", height=800, width=1000,
+                  template="plotly_white", height=800, width=1000, font_family="Arial",
                   xaxis2=dict(title="Time (s)"), xaxis3=dict(title="Time (s)"), xaxis4=dict(title="Time (s)"), xaxis5=dict(title="Time (s)"),
                   xaxis7=dict(title="Frequency (Hz)"), xaxis8=dict(title="Frequency (Hz)"), xaxis9=dict(title="Frequency (Hz)"), xaxis10=dict(title="Frequency (Hz)"),
                   xaxis16=dict(title="Time (s)"), xaxis17=dict(title="Time (s)"), xaxis18=dict(title="Time (s)"), xaxis19=dict(title="Time (s)"), xaxis20=dict(title="Time (s)"),
@@ -120,9 +121,12 @@ fig.update_layout(legend=dict(orientation="h", yanchor="top", y=1.15, xanchor="c
                   yaxis20=dict(showticklabels=False), yaxis21=dict(showticklabels=False), yaxis22=dict(showticklabels=False), yaxis23=dict(showticklabels=False),
                   )
 
-pio.write_html(fig, file=folder + "/PAPER5_g_explore.html", auto_open=True, include_mathjax="cdn")
-pio.write_image(fig, file=folder + "/PAPER5_g_explore.svg", engine="kaleido")
+pio.write_html(fig, file=folder + "/PAPER-R5_g_explore.html", auto_open=True, include_mathjax="cdn")
+pio.write_image(fig, file=folder + "/PAPER-R5_g_explore.svg", engine="kaleido")
 
+# folder = "E:\jescab01.github.io\\research\\th\\figs"
+# pio.write_html(fig, file=folder + "/PAPER-R5_g_explore.html", auto_open=True, include_mathjax="cdn")
+# pio.write_image(fig, file=folder + "/PAPER-R5_g_explore.svg", engine="kaleido")
 
 ## Calculate signals amplitude vs dc-offset
 # i = 3

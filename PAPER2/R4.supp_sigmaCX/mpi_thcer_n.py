@@ -12,9 +12,6 @@ execute in terminal with : mpiexec -n 4 python mpi_thcer2.py
 """
 
 name = "adjustingrange_allnodesNoise_v2"
-"""
-for this test I have applied the sigma level to all nodes, lets see.
-"""
 
 # get number of processors and processor rank
 comm = MPI.COMM_WORLD
@@ -26,6 +23,7 @@ rank = comm.Get_rank()
 subj_ids = [35]#, 49, 50, 58, 59, 64, 65, 71, 75, 77]
 subjects = ["NEMOS_0" + str(id) for id in subj_ids]
 # subjects.append("NEMOS_AVG")
+
 
 models = ["jr"]
 
@@ -92,11 +90,9 @@ else:  ## MASTER PROCESS _receive, merge and save results
     # print("Results")
     # print(final_results)
 
-    fResults_df = pd.DataFrame(final_results, columns=["subject", "model", "th", "cer",
-                                                       "g", "pth", "sigmath", "pcx", "sigmacx", "rep",
-                                                       "min_cx", "max_cx", "min_th", "max_th",
-                                                       "IAF", "module", "bModule", "band",
-                                                       "rPLV", "dFC_KSD", "KOstd", "KOstd_emp"])
+    fResults_df = pd.DataFrame(final_results, columns=["subject", "model", "th", "cer", "g", "pth", "sigmath", "pcx", "sigmacx", "rep",
+                                                       "min_cx", "max_cx", "min_th", "max_th", "IAF", "module", "bModule", "band",
+                                                       "rPLV", "dFC_KSD", "KOstd", "KOstd_emp", "plv_m", "plv_sd", "dfc_m", "dfc_sd"])
 
     ## Save resutls
     ## Folder structure - Local

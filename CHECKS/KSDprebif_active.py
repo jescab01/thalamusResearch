@@ -15,7 +15,6 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import plotly.express as px
 import plotly.io as pio
-
 import pickle
 
 
@@ -323,16 +322,15 @@ transient = 4000  # ms
 # results_df = pd.DataFrame(np.asarray(result, dtype=object), columns=["emp_subj", "model", "th", "cer", "g", "pth", "sigmath", "pcx", "sigmacx", "plv_r", "dFC", "dFC_emp", "ko_std", "ko_emp"])
 # results_df.to_pickle("data/KSDprebif_active3.pkl")
 
-results_df = pd.read_pickle("data/KSDprebif_active3.pkl")
+results_df = pd.read_pickle("CHECKS/data/KSDprebif_active3.pkl")
 
 # Calculate KSDs from gathered matrices
 ksds = []
 for j, th in enumerate(structure_th):
     for i, g in enumerate(coupling_vals):
-        sub = results_df.loc[(results_df["th"] == th) & (results_df["g"]==g)]
+        sub = results_df.loc[(results_df["th"] == th) & (results_df["g"] == g)]
         ksds.append(scipy.stats.kstest(sub["dFC_emp"].values[0][np.triu_indices(len(sub["dFC"].values[0]), 1)].flatten(),
                                        sub["dFC"].values[0][np.triu_indices(len(sub["dFC"].values[0]), 1)].flatten())[0])
-
 
 ## PLOT results
 fig = make_subplots(rows=4, cols=3, column_titles=structure_th, shared_xaxes=True, shared_yaxes=True,
@@ -340,8 +338,8 @@ fig = make_subplots(rows=4, cols=3, column_titles=structure_th, shared_xaxes=Tru
 
 for j, th in enumerate(structure_th):
     for i, g in enumerate(coupling_vals):
-        sl = True if (j==0) & (i==0) else False
-        sub = results_df.loc[(results_df["th"] == th) & (results_df["g"]==g)]
+        sl = True if (j == 0) & (i == 0) else False
+        sub = results_df.loc[(results_df["th"] == th) & (results_df["g"] == g)]
         fig.add_trace(go.Histogram(x=sub["dFC_emp"].values[0][np.triu_indices(len(sub["dFC"].values[0]), 1)].flatten(), marker_color="lightgreen",
                                    name="empirical", legendgroup="empirical", showlegend=sl, xbins=dict(size=0.01)), row=i+1, col=j+1)
         fig.add_trace(go.Histogram(x=sub["dFC"].values[0][np.triu_indices(len(sub["dFC"].values[0]), 1)].flatten(), marker_color="lightgray",
@@ -349,18 +347,23 @@ for j, th in enumerate(structure_th):
         text = "rPLV = " + str(round(sub.plv_r.values[0], 2)) + "<br>KSD = "+str(round(ksds[j*len(coupling_vals)+i], 3))
         fig.add_annotation(x=0.3, y=35, text=text, showarrow=False, row=i+1, col=j+1)
 
-        # Overlay both histograms
-        fig.update_layout(barmode='overlay', template="plotly_white",
-                          xaxis16=dict(title="Pearson's r", range=[0, 1]),
-                          xaxis17=dict(title="Pearson's r", range=[0, 1]),
-                          xaxis18=dict(title="Pearson's r", range=[0, 1]),
-                          yaxis1=dict(range=[0, 50]),
-                          yaxis4=dict(range=[0, 50]),
-                          yaxis7=dict(range=[0, 50]),
-                          yaxis10=dict(range=[0, 50]),
-                          yaxis13=dict(range=[0, 50]),
-                          yaxis16=dict(range=[0, 50]))
-        # Reduce opacity to see both histograms
-        fig.update_traces(opacity=0.9)
-pio.write_html(fig, file="data/KSDprebif_active3b.html", auto_open=True)
-pio.write_image(fig, file="data/KSDprebif_active3b.svg", width=1000, height=700)
+# Overlay both histograms
+fig.update_layout(barmode='overlay', template="plotly_white", font_family="Arial",
+                  xaxis16=dict(title="Pearson's r", range=[0, 1]),
+                  xaxis17=dict(title="Pearson's r", range=[0, 1]),
+                  xaxis18=dict(title="Pearson's r", range=[0, 1]),
+                  yaxis1=dict(range=[0, 50]),
+                  yaxis4=dict(range=[0, 50]),
+                  yaxis7=dict(range=[0, 50]),
+                  yaxis10=dict(range=[0, 50]),
+                  yaxis13=dict(range=[0, 50]),
+                  yaxis16=dict(range=[0, 50]))
+
+# Reduce opacity to see both histograms
+fig.update_traces(opacity=0.75)
+pio.write_html(fig, file="CHECKS/data/PAPER-sm2_KSDprebif_active3b.html", auto_open=True)
+pio.write_image(fig, file="CHECKS/data/PAPER-sm2_KSDprebif_active3b.svg", width=1000, height=700)
+
+folder = "E:\jescab01.github.io\\research\\th\\figs"
+pio.write_html(fig, file=folder + "/PAPER-sm2_KSDprebif_active3b.html", auto_open=True)
+pio.write_image(fig, file=folder + "/PAPER-sm2_KSDprebif_active3b.svg", width=1000, height=700)

@@ -54,6 +54,7 @@ for th, cer in [("woTh", "woCer"), ("Th", "Cer"), ("pTh", "pCer")]:
 
 res_ttests = pd.DataFrame(res_ttests, columns=["g1", "g2", "W-val", "alt", "p-val", "RBC", "CLES"])
 
+res_ttests["p-corr"] = pg.multicomp(res_ttests["p-val"].values, alpha=0.05, method="fdr_bh")[1]
 
 
 

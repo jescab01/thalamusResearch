@@ -17,18 +17,18 @@ import statsmodels.api as sm
 import plotly.graph_objects as go
 
 data_folder = "E:\LCCN_Local\PycharmProjects\\thalamusResearch\PAPER\R4.3_phetero-cx\data\\"
-sim_tag = "pHetero-SUBJECTs_m11d23y2022-t19h.18m.27s"
+sim_tag = "pHetero-SUBJECTs_m12d08y2022-t11h.19m.24s"
 
-df = pd.read_pickle(data_folder + sim_tag + "/.pHeteroTABLE-SUBJECTS.pkl")
+df = pd.read_pickle(data_folder + sim_tag + "/.1pHeteroTABLE-SUBJECTS.pkl")
 
 df["degree_rel"] = df["g"] * (df["degree"] - df["degree_avg"])
 df["degree_fromth_rel"] = df["g"] * (df["degree_fromth"] - df["degree_fromth_avg"])
 
 # Split the sample
-subj_ids = [35, 49, 50, 58, 59]
+subj_ids = [35, 49, 50]
 subjects = ["NEMOS_0" + str(id) for id in subj_ids]
 
-# Use just 50% of the sample to fit the model: training sample
+# Use just 30% of the sample to fit the model: training sample
 df_train = df.loc[(df["subject"].isin(subjects))]
 df_test = df.loc[-(df["subject"].isin(subjects))]
 

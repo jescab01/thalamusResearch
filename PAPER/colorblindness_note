@@ -1,0 +1,27 @@
+# Color blindness
+
+There are ways of avoiding color blindness issues in your figures. Most of colorblind people suffer from
+Deuteranomaly (Deuteranopia o daltonismo). There are web-pages that explains how is their color perception:
+- https://venngage.com/blog/color-blind-friendly-palette/
+- https://towardsdatascience.com/two-simple-steps-to-create-colorblind-friendly-data-visualizations-2ed781a167ec
+
+And there, you can find webpages that help you creating color-palettes that are friendly to colorblind people:
+- https://colorbrewer2.org/
+- https://coolors.co/
+
+What I eventually have found is that the proposed colors are not very different from the ones already used
+in plotly. Maybe the point is that I dont have to notice it, because I dont have the problem.
+
+
+## FIGURE 1 - colorbrewer2
+Using 3 classes; qualitative; colorblind safe:
+#66c2a5 - green
+#fc8d62 - red
+#8da0cb - blue
+
+
+# FIGURE 3 - ""
+Using 6 classes; sequential; colorblind safe:
+#c994c7 - purple
+#df65b0 - pink
+#dd1c77 - fucsia

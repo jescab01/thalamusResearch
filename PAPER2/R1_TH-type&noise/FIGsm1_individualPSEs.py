@@ -8,15 +8,15 @@ from plotly.subplots import make_subplots
 import plotly.express as px
 
 # Define PSE folder
-simulations_tag = "PSEmpi_JRstd0.022TH-m10d04y2022-t21h.16m.56s"
-folder = 'PAPER\\R1_TH-type&noise\\' + simulations_tag + '\\'
+simulations_tag = "PSEmpi_JR_v2-m12d19y2022-t14h.39m.50s"
+folder = 'PAPER2\\R1_TH-type&noise\\' + simulations_tag + '\\'
 
 df = pd.read_csv(folder + "/results.csv")
 
 structure_th = ["woTh", "Th", "pTh"]
 
 # Average out repetitions
-df_avg = df.groupby(["subject", "model", "th", "cer", "g", "sigma"]).mean().reset_index()
+df_avg = df.groupby(["subject", "model", "th", "cer", "g", "sigmath"]).mean().reset_index()
 
 # TODO you need to take a look on the parameter spaces; don't pass without it.
 
@@ -33,7 +33,7 @@ opacity = 0.8
 
 subjects = sorted(set(df_avg.subject))
 
-fig1 = make_subplots(rows=10, cols=2, horizontal_spacing=0.15,
+fig = make_subplots(rows=10, cols=3, horizontal_spacing=0.15,
                      shared_xaxes=True, row_titles=["Subj" + str(i+1) for i, subj in enumerate(subjects)])
 
 for ii, subj in enumerate(subjects):
@@ -47,32 +47,62 @@ for ii, subj in enumerate(subjects):
         c = c1 if th == "woTh" else c2 if th == "Th" else c3
 
         # Plot rPLV - active
-        df_sub_avg = df_avg.loc[(df_avg["th"] == th) & (df_avg["sigma"] == 0.022) & (df_avg["subject"] == subj)]
-        fig1.add_trace(
+        df_sub_avg = df_avg.loc[(df_avg["th"] == th) & (df_avg["sigmath"] == 0.022) & (df_avg["subject"] == subj)]
+        fig.add_trace(
             go.Scatter(x=df_sub_avg.g, y=df_sub_avg.rPLV, name=leg, legendgroup=leg, mode="lines",
                        line=dict(width=3, color=c), opacity=opacity, showlegend=sl), row=ii+1, col=1)
 
         # Plot dFC_KSD - active
-        df_sub_avg = df_avg.loc[(df_avg["th"] == th) & (df_avg["sigma"] == 0.022) & (df_avg["subject"] == subj)]
-        fig1.add_trace(go.Scatter(x=df_sub_avg.g, y=df_sub_avg.dFC_KSD, legendgroup=leg, mode="lines",
+        df_sub_avg = df_avg.loc[(df_avg["th"] == th) & (df_avg["sigmath"] == 0.022) & (df_avg["subject"] == subj)]
+        fig.add_trace(go.Scatter(x=df_sub_avg.g, y=df_sub_avg.dFC_KSD, legendgroup=leg, mode="lines",
                                   line=dict(dash='solid', color=c, width=1.5), opacity=opacity, showlegend=False, visible=True),
                        row=ii+1, col=2)
 
-for i in range(1, 21, 2):
-    fig1["layout"]["yaxis" + str(i)]["range"] = [-0.05, 0.65]
-    if i == list(range(1, 21, 2))[5]:
-        fig1["layout"]["yaxis" + str(i)]["title"] = "$r_{PLV}$"
-    if i == list(range(1, 21, 2))[-1]:
-        fig1["layout"]["xaxis" + str(i)]["title"] = "Coupling factor (g)"
-for i in range(2, 21, 2):
-    fig1["layout"]["yaxis" + str(i)]["range"] = [0, 1]
-    if i == list(range(2, 21, 2))[5]:
-        fig1["layout"]["yaxis" + str(i)]["title"] = "KSD"
-    if i == list(range(2, 21, 2))[-1]:
-        fig1["layout"]["xaxis" + str(i)]["title"] = "Coupling factor (g)"
+        c4, c5 = "gray", "dimgray"  # cmap_s2[-1], cmap_p2[-1]
 
-fig1.update_layout(template="plotly_white", width=900, height=1100,
+        # Plot CX bifurcation
+        fig.add_trace(go.Scatter(x=df_sub_avg.g, y=df_sub_avg.max_cx, name=leg,
+                                 legendgroup=leg, mode="lines", opacity=0.5,
+                                 line=dict(width=4, color=c), showlegend=False), row=ii+1, col=3)
+
+        fig.add_trace(go.Scatter(x=df_sub_avg.g, y=df_sub_avg.min_cx, name=leg,
+                                 legendgroup=leg, mode="lines", opacity=0.5,
+                                 line=dict(width=4, color=c), showlegend=False), row=ii+1, col=3)
+
+        # Plot TH bifurcation
+        fig.add_trace(go.Scatter(x=df_sub_avg.g, y=df_sub_avg.max_th, name=leg,
+                                 legendgroup=leg, mode="lines",
+                                 line=dict(width=2, dash='dot', color=c),
+                                 showlegend=False), row=ii+1, col=3)
+
+        fig.add_trace(go.Scatter(x=df_sub_avg.g, y=df_sub_avg.min_th, name=leg,
+                                 legendgroup=leg, mode="lines",
+                                 line=dict(width=2, dash='dot', color=c),
+                                 showlegend=False), row=ii+1, col=3)
+
+for i in range(1, 31, 3):
+    fig["layout"]["yaxis" + str(i)]["range"] = [-0.05, 0.65]
+    if i == list(range(1, 31, 3))[5]:
+        fig["layout"]["yaxis" + str(i)]["title"] = "$r_{PLV}$"
+    if i == list(range(1, 31, 3))[-1]:
+        fig["layout"]["xaxis" + str(i)]["title"] = "Coupling factor (g)"
+for i in range(2, 31, 3):
+    fig["layout"]["yaxis" + str(i)]["range"] = [0, 1]
+    if i == list(range(2, 31, 3))[5]:
+        fig["layout"]["yaxis" + str(i)]["title"] = "KSD"
+    if i == list(range(2, 31, 3))[-1]:
+        fig["layout"]["xaxis" + str(i)]["title"] = "Coupling factor (g)"
+for i in range(3, 31, 3):
+    if i == list(range(3, 31, 3))[5]:
+        fig["layout"]["yaxis" + str(i)]["title"] = "Bifurcations<br><b>cx</b> | th"
+    if i == list(range(3, 31, 3))[-1]:
+        fig["layout"]["xaxis" + str(i)]["title"] = "Coupling factor (g)"
+fig.update_layout(template="plotly_white", width=900, height=1100, font_family="Arial",
                    legend=dict(orientation="h", xanchor="right", x=0.95, yanchor="bottom", y=1.04))
 
-pio.write_image(fig1, file=folder + "/PAPER6sm_SUBJECTS-lineSpaces.svg", engine="kaleido")
-pio.write_html(fig1, file=folder + "/PAPER6sm_SUBJECTS-lineSpaces.html", auto_open=True, include_mathjax="cdn")
+pio.write_image(fig, file=folder + "/PAPER-sm1_SUBJECTS-lineSpaces.svg", engine="kaleido")
+pio.write_html(fig, file=folder + "/PAPER-sm1_SUBJECTS-lineSpaces.html", auto_open=True, include_mathjax="cdn")
+
+folder = "E:\jescab01.github.io\\research\\th\\figs"
+pio.write_image(fig, file=folder + "/PAPER-sm1_SUBJECTS-lineSpaces.svg", engine="kaleido")
+pio.write_html(fig, file=folder + "/PAPER-sm1_SUBJECTS-lineSpaces.html", auto_open=True, include_mathjax="cdn")

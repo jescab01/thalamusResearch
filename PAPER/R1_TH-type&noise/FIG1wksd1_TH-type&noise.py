@@ -46,10 +46,9 @@ for cond in [0, 0.022]:
 
 res_aov = pd.DataFrame(res_aov, columns=["cond", "source", "ddof1", "ddof2", "F", "p-unc", "p-GG-corr", "ng2", "eps", "sphericity", "W-spher", "p-spher"])
 
-# Multiple comparisons on sigma==0.022: wilcoxon
-res_mc = pg.pairwise_tests(df_max, dv="rPLV", within=["sigma", "th"], subject="subject", effsize="cohen").iloc[4:]
-res_mc = res_mc.append(pg.pairwise_tests(df_max, dv="rPLV", within=["th", "sigma"], subject="subject", effsize="cohen").iloc[4:])
-
+# Multiple comparisons on sigma==0.022: wilcoxon (due to small sample size)
+res_mc = pg.pairwise_tests(df_max, dv="rPLV", within=["sigma", "th"], subject="subject", effsize="cohen", parametric=False).iloc[4:]
+res_mc = res_mc.append(pg.pairwise_tests(df_max, dv="rPLV", within=["th", "sigma"], subject="subject", effsize="cohen", parametric=False).iloc[4:])
 
 # Multiple comparisons correction
 res_mc["p-corr"] = pg.multicomp(res_mc["p-unc"].values, alpha=0.05, method="fdr_bh")[1]

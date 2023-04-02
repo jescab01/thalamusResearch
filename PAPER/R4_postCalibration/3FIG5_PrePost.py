@@ -7,6 +7,7 @@ TODO after the idea is ready recompute calculus
   -  WITH OR WITHOUT THALAMUS  -
 '''
 
+import os
 import pandas as pd
 import pingouin as pg
 import numpy as np
@@ -20,22 +21,17 @@ import plotly.io as pio
 import pickle
 
 
-## DATA for reference rPLV & KSD: PRE-
-simulations_tag = "PSEmpi_JRstd0.022TH-m10d04y2022-t21h.16m.56s"
-folder = 'PAPER\\R1_TH-type&noise\\' + simulations_tag + '\\'
+## DATA for reference rPLV & KSD: PRE-POST && DATA for g_explore
+simulations_tag = "PSEmpi_CalibProc_prepost-m12d09y2022-t20h.07m.01s"
 
-df_pre = pd.read_csv(folder + "results.csv")
+if "PAPER" in os.getcwd():
+    folder = 'data\\' + simulations_tag + '\\'
+else:
+    folder = 'PAPER\\R4_postCalibration\\data\\' + simulations_tag + '\\'
+
+df_prepost = pd.read_csv(folder + "results.csv")
 # Average out repetitions and subjects
-df_pre_avg = df_pre.groupby(["subject", "model", "th", "cer", "g", "sigma"]).mean().reset_index()
-
-
-## DATA for reference rPLV & KSD: POST-
-simulations_tag = "PSEmpi_JRstd0.022TH-post-m10d06y2022-t18h.55m.23s"
-folder = 'PAPER\\R4_postCalibration\\data\\' + simulations_tag + '\\'
-
-df_post = pd.read_csv(folder + "results.csv")
-# Average out repetitions and subjects
-df_post_avg = df_post.groupby(["subject", "model", "th", "cer", "g", "sigma"]).mean().reset_index()
+df_prepost_avg = df_prepost.groupby(["subject", "model", "th", "cer", "g", "pth", "sigma", "pcx"]).mean().reset_index()
 
 
 # Colours
@@ -45,47 +41,41 @@ opacity = 0.9
 
 c4, c5 = "gray", "dimgray" #cmap_s2[-1], cmap_p2[-1]
 
-for id in [35, 49, 50, 58, 59, 64, 65, 71, 75, 77]:
-
-    subj = "NEMOS_0" + str(id)
-
-    ## DATA for g_explore
-    simulations_tag = "g_explore-FIG5_N"+str(id)+"-PrePost.pkl"
-    folder = 'PAPER\\R4_postCalibration\\data\\'
+subj_ids = [58, 59, 64, 65, 71, 75, 77]
+subjects = ["NEMOS_0" + str(id) for id in subj_ids]
+# for each of the simulated gexplores (subjects):
+for subj in subjects:
 
     # Load and plot already computed simulations.
-    with open(folder + simulations_tag, "rb") as input_file:
-        ref, output = pickle.load(input_file)
+    with open(folder + "\\g_explore-" + subj + "inTestingGroup-PrePost.pkl", "rb") as input_file:
+        output = pickle.load(input_file)
+
+    output = [output[0]] + [output[-1]]
 
     ##       FIGURE     ##################
-    specs = [[{"secondary_y": True, "colspan": 2}, {}, {"secondary_y": True, "colspan": 2}, {}],
-             [{"colspan": 2}, {}, {"colspan": 2}, {}],
-             [{"secondary_y": True, "colspan": 2}, {}, {"secondary_y": True, "colspan": 2}, {}],
-             [{"secondary_y": True, "colspan": 2}, {}, {"secondary_y": True, "colspan": 2}, {}],
-             [{"r": -0.08}, {"l": -0.08}, {"r": -0.08}, {"l": -0.08}]]
+    specs = [[{"secondary_y": True, "colspan": 2}, {}] * 2,
+             [{"colspan": 2}, {}] * 2,
+             [{"secondary_y": True, "colspan": 2}, {}] * 2,
+             [{"secondary_y": True, "colspan": 2}, {}] * 2,
+             [{"r": -0.08}, {"l": -0.08}] * 2]
 
     fig = make_subplots(rows=5, cols=4, shared_yaxes=False, specs=specs, horizontal_spacing=0.2, vertical_spacing=0.11,
                         row_heights=[0.18, 0.18, 0.18, 0.18, 0.28], column_titles=["<i>Pre-calibration", "", "<i>Post-calibration"])
 
-    for i, phase in enumerate(["pre", "post"]):
+    for i, (set, sim) in enumerate(output):
 
-        # Load PRE - data
         # Unpack output
-        signals, timepoints, plv, dplv, plv_emp, dFC_emp, regionLabels, simLength, transient, SC_cortex_idx = output[i]
-
-        # Plot reference rPLV + KSD in pTh active contition: PRE
-        sigma = 0.022 if phase == "pre" else 0.15
+        subj, g, pth, sigma, pcx = set
+        signals, timepoints, plv, dplv, plv_emp, dFC_emp, regionLabels, simLength, transient, SC_cortex_idx = sim[0]
 
         col = i*2+1
 
-        if phase == "pre":
-            df_sub_avg = df_pre_avg.loc[(df_pre_avg["th"] == "pTh") & (df_pre_avg["sigma"] == sigma) & (df_pre_avg["subject"] == subj)]
-
-        elif phase == "post":
-            df_sub_avg = df_post_avg.loc[(df_post_avg["th"] == "pTh") & (df_post_avg["sigma"] == 0.15) & (df_post_avg["subject"] == subj)]
+        df_sub_avg = df_prepost_avg.loc[(df_prepost_avg["subject"] == subj) & (df_prepost_avg["th"] == "pTh") &
+                                        (df_prepost_avg["pth"] == pth) & (df_prepost_avg["sigma"] == sigma) &
+                                        (df_prepost_avg["pcx"] == str(pcx))]
 
         fig.add_trace(go.Scatter(x=df_sub_avg.g, y=df_sub_avg.rPLV, mode="lines", opacity=opacity,
-                       line=dict(width=4, color=c3), showlegend=False), row=1, col=col)
+                       line=dict(width=4, color=cmap_p2[2]), showlegend=False), row=1, col=col)
 
         fig.add_trace(go.Scatter(x=df_sub_avg.g, y=df_sub_avg.dFC_KSD, mode="lines", opacity=opacity,
                                  line=dict(dash='solid', color=c3, width=2), showlegend=False), secondary_y=True, row=1, col=col)
@@ -128,7 +118,7 @@ for id in [35, 49, 50, 58, 59, 64, 65, 71, 75, 77]:
                     sl_groups.append(regionGroup)
                     # Timeseries
                     fig.add_trace(go.Scatter(x=timepoints[2900:5000] / 1000, y=signal[2900:5000], name=regionLabels[ii],
-                                             legendgroup=regionGroup,
+                                             legendgroup=regionGroup, line=dict(width=1), opacity=0.7,
                                              showlegend=sl, marker_color=cmap[ii % len(cmap)]), secondary_y=sy, row=3, col=col)
                     # Spectra
                     freqRange = [2, 40]
@@ -137,6 +127,7 @@ for id in [35, 49, 50, 58, 59, 64, 65, 71, 75, 77]:
                         fft_temp[range(int(len(signal) / 2))])  # Select just positive side of the symmetric FFT
                     fft = fft[(freqs > freqRange[0]) & (freqs < freqRange[1])]  # remove undesired frequencies
                     fig.add_trace(go.Scatter(x=freqs[(freqs > freqRange[0]) & (freqs < freqRange[1])], y=fft,
+                                             line=dict(width=1), opacity=0.7,
                                              marker_color=cmap[ii % len(cmap)], legendgroup=regionGroup, name=regionLabels[ii],
                                              showlegend=False), secondary_y=sy, row=4, col=col)
 
@@ -154,14 +145,14 @@ for id in [35, 49, 50, 58, 59, 64, 65, 71, 75, 77]:
 
     fig.update_layout(template="plotly_white", width=1000, height=900,
                       legend=dict(yanchor="top", y=0.64),
-                      yaxis1=dict(title="<b>rPLV<b>"), yaxis2=dict(title="KSD"),
-                      #yaxis4=dict(title="<b>rPLV<b>"), yaxis5=dict(title="KSD"),
+                      yaxis1=dict(title="$r_{PLV}$", range=[0, 0.6]), yaxis2=dict(title="KSD", range=[0, 1]),
+                      yaxis4=dict(range=[0, 0.6]), yaxis5=dict(range=[0, 1]),
 
                       yaxis7=dict(title="min-max<br>Voltage (mV)<br><b>cx</b> | th"),
                       # yaxis9=dict(title="min-max<br>Voltage (mV)<br><b>cx</b> | th"),
 
-                      yaxis11=dict(title="Voltage (mV)<br>-cx-"), yaxis12=dict(title="-th-"),
-                      yaxis17=dict(title="Power (dB)<br>-cx-"), yaxis18=dict(title="-th-"),
+                      yaxis11=dict(title="Voltage (mV)<br>cx | th"),
+                      yaxis17=dict(title="Power (dB)<br>cx | th"),
 
                       yaxis25=dict(showticklabels=False), #yaxis24=dict(title="Time (ms)"), #yaxis26=dict(title="Time (ms)"),
 
@@ -172,8 +163,8 @@ for id in [35, 49, 50, 58, 59, 64, 65, 71, 75, 77]:
                       xaxis13=dict(title="Frequency (Hz)"), xaxis15=dict(title="Frequency (Hz)"),
                       xaxis18=dict(title="Time (ms)"), xaxis20=dict(title="Time (ms)"),
                       )
-    pio.write_html(fig, file=folder + "/PAPER9sm_PrePost_"+subj+".html", auto_open=True)
-    # pio.write_image(fig, file=folder + "/g_explore.svg", engine="kaleido")
+    pio.write_html(fig, file=folder + "/PAPER5_PrePost_"+subj+".html", auto_open=False, include_mathjax="cdn")
+    pio.write_image(fig, file=folder + "/PAPER5_PrePost_"+subj+".svg", engine="kaleido")
 
 
 
