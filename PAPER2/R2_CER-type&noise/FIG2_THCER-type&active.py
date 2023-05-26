@@ -141,9 +141,9 @@ fig3.add_shape(x0=prebif_lowg, x1=prebif_topg, y0=0, y1=0.5, row=2, col=2, line=
 
 
 fig3.update_layout(template="plotly_white", #title="Importance of thalamus parcellation and input (10 subjects)",
-                   yaxis1=dict(title=r"$\text{max. } r_{PLV} \text{ prebif}$", color="black"),
-                   yaxis2=dict(title="$r_{PLV}$", color="black", range=[0, 0.5]),
-                   yaxis4=dict(title="$r_{PLV}$", color="black", range=[0, 0.5]),
+                   yaxis1=dict(title=r"$\text{max. } r_{PLV(\alpha)} \text{ prebif}$", color="black"),
+                   yaxis2=dict(title=r"$r_{PLV(\alpha)}$", color="black", range=[0, 0.5]),
+                   yaxis4=dict(title=r"$r_{PLV(\alpha)}$", color="black", range=[0, 0.5]),
                    xaxis4=dict(title="Coupling factor (g)"),
                    legend=dict(orientation="h", xanchor="right", x=0.9, yanchor="bottom", y=1.02, groupclick="toggleitem"),
                    boxmode="group", height=400, width=700, font_family="Arial")
@@ -157,74 +157,74 @@ pio.write_image(fig3, file=folder + "/PAPER-R2_THCER_lineSpace-boxplots.svg")
 # pio.write_image(fig3, file=folder + "/PAPER-R2_THCER_lineSpace-boxplots.svg")
 
 
-
-## Checking bifurcations
-
-fig3 = make_subplots(rows=3, cols=2, row_titles=["Thalamus", "Cerebellum"], column_widths=[0.3, 0.7],
-                     specs=[[{"rowspan": 2}, {}], [{}, {}], [{},{}]], horizontal_spacing=0.15)
-
-for i, th in enumerate(structure_th):
-
-    group = "wo" if th == "woTh" else "w" if th == "Th" else "wp"
-
-    # ADD LINEPLOTS THALAMUS
-    name = "without Thalamus" if th=="woTh" else "single Thalamus" if th=="Th" else "parcelled Thalamus"
-    c = c1 if th == "woTh" else c2 if th == "Th" else c3
-
-    # Plot rPLV - active
-    df_sub_avg = df_th_groupavg.loc[(df_th_avg["th"] == th) & (df_th_avg["sigmath"] == 0.022)]
-    fig3.add_trace(
-        go.Scatter(x=df_sub_avg.g, y=df_sub_avg.rPLV, name=name, legendgroup=group, mode="lines", opacity=opacity,
-                   line=dict(width=4, color=c), showlegend=True), row=1, col=2)
-
-    # ADD BOXPLOTS
-    # datapoints - Active
-    df_sub = df_th_maxprebif.loc[(df_th_maxprebif["th"] == th) & (df_th_maxprebif["sigmath"] == 0.022)]
-    fig3.add_trace(go.Box(x=[group]*len(df_sub.th.values), y=df_sub.rPLV.values, fillcolor=c, line=dict(color="black", width=1),
-                          legendgroup=group, opacity=opacity, showlegend=False), row=1, col=1)
-
-    # ADD LINEPLOTS CEREBELLUM
-    cer = structure_cer[i]
-    name = "without Cerebellum" if cer == "woCer" else "single Cerebellum" if cer == "Cer" else "parcelled Cerebellum"
-    c = c4 if cer == "woCer" else c5 if cer == "Cer" else c6
-
-    # Plot rPLV - active
-    df_sub_avg = df_cer_groupavg.loc[(df_cer_groupavg["cer"] == cer) & (df_cer_groupavg["sigmath"] == 0.022)]
-    fig3.add_trace(
-        go.Scatter(x=df_sub_avg.g, y=df_sub_avg.rPLV, name=name, legendgroup=group, mode="lines", opacity=opacity,
-                   line=dict(width=4, color=c), showlegend=True), row=2, col=2)
-
-    fig3.add_trace(go.Scatter(x=df_sub_avg.g, y=df_sub_avg.max_cx, name="cortical ROIs",
-                             legendgroup="cortical ROIs", mode="lines",
-                             line=dict(width=2, color=c), showlegend=False), row=3, col=2)
-
-    fig3.add_trace(go.Scatter(x=df_sub_avg.g, y=df_sub_avg.min_cx, name="cortical ROIs",
-                             legendgroup="cortical ROIs", mode="lines",
-                             line=dict(width=2, color=c), showlegend=False), row=3, col=2)
-
-
-fig3.add_shape(x0=prebif_lowg, x1=prebif_topg, y0=0, y1=0.5, row=1, col=2, line=dict(color="lightgray"), fillcolor="lightgray", opacity=0.3)
-fig3.add_shape(x0=prebif_lowg, x1=prebif_topg, y0=0, y1=0.5, row=2, col=2, line=dict(color="lightgray"), fillcolor="lightgray", opacity=0.3)
-
-# s1, s2, s3, s4 = cmap_p[2], cmap_p[4], cmap_p[1], cmap_p[5]
-# op_scenario = 0.35
-
-# fig3.add_vrect(x0=0, x1=prebif_topg, row=1, col=2, fillcolor=s1, opacity=op_scenario, line_width=0)
-# fig3.add_vrect(x0=prebif_topg, x1=60, row=1, col=2, fillcolor=s2, opacity=op_scenario, line_width=0)
 #
-# fig3.add_vrect(x0=0, x1=prebif_topg, row=2, col=2, fillcolor=s1, opacity=op_scenario, line_width=0)
-# fig3.add_vrect(x0=prebif_topg, x1=60, row=2, col=2, fillcolor=s2, opacity=op_scenario, line_width=0)
-
-
-
-fig3.update_layout(template="plotly_white", #title="Importance of thalamus parcellation and input (10 subjects)",
-                   yaxis1=dict(title=r"$\text{max. } r_{PLV} \text{ prebif}$", color="black"),
-                   yaxis2=dict(title="$r_{PLV}$", color="black", range=[0, 0.5]),
-                   yaxis4=dict(title="$r_{PLV}$", color="black", range=[0, 0.5]),
-                   xaxis4=dict(title="Coupling factor (g)"),
-                   legend=dict(orientation="h", xanchor="right", x=0.9, yanchor="bottom", y=1.02, groupclick="toggleitem"),
-                   boxmode="group", height=400, width=700, font_family="Arial")
-
-
-pio.write_html(fig3, file= "figures/PAPER-R2_THCER_lineSpace-boxplots.html", auto_open=True, include_mathjax="cdn")
-
+# ## Checking bifurcations
+#
+# fig3 = make_subplots(rows=3, cols=2, row_titles=["Thalamus", "Cerebellum"], column_widths=[0.3, 0.7],
+#                      specs=[[{"rowspan": 2}, {}], [{}, {}], [{},{}]], horizontal_spacing=0.15)
+#
+# for i, th in enumerate(structure_th):
+#
+#     group = "wo" if th == "woTh" else "w" if th == "Th" else "wp"
+#
+#     # ADD LINEPLOTS THALAMUS
+#     name = "without Thalamus" if th=="woTh" else "single Thalamus" if th=="Th" else "parcelled Thalamus"
+#     c = c1 if th == "woTh" else c2 if th == "Th" else c3
+#
+#     # Plot rPLV - active
+#     df_sub_avg = df_th_groupavg.loc[(df_th_avg["th"] == th) & (df_th_avg["sigmath"] == 0.022)]
+#     fig3.add_trace(
+#         go.Scatter(x=df_sub_avg.g, y=df_sub_avg.rPLV, name=name, legendgroup=group, mode="lines", opacity=opacity,
+#                    line=dict(width=4, color=c), showlegend=True), row=1, col=2)
+#
+#     # ADD BOXPLOTS
+#     # datapoints - Active
+#     df_sub = df_th_maxprebif.loc[(df_th_maxprebif["th"] == th) & (df_th_maxprebif["sigmath"] == 0.022)]
+#     fig3.add_trace(go.Box(x=[group]*len(df_sub.th.values), y=df_sub.rPLV.values, fillcolor=c, line=dict(color="black", width=1),
+#                           legendgroup=group, opacity=opacity, showlegend=False), row=1, col=1)
+#
+#     # ADD LINEPLOTS CEREBELLUM
+#     cer = structure_cer[i]
+#     name = "without Cerebellum" if cer == "woCer" else "single Cerebellum" if cer == "Cer" else "parcelled Cerebellum"
+#     c = c4 if cer == "woCer" else c5 if cer == "Cer" else c6
+#
+#     # Plot rPLV - active
+#     df_sub_avg = df_cer_groupavg.loc[(df_cer_groupavg["cer"] == cer) & (df_cer_groupavg["sigmath"] == 0.022)]
+#     fig3.add_trace(
+#         go.Scatter(x=df_sub_avg.g, y=df_sub_avg.rPLV, name=name, legendgroup=group, mode="lines", opacity=opacity,
+#                    line=dict(width=4, color=c), showlegend=True), row=2, col=2)
+#
+#     fig3.add_trace(go.Scatter(x=df_sub_avg.g, y=df_sub_avg.max_cx, name="cortical ROIs",
+#                              legendgroup="cortical ROIs", mode="lines",
+#                              line=dict(width=2, color=c), showlegend=False), row=3, col=2)
+#
+#     fig3.add_trace(go.Scatter(x=df_sub_avg.g, y=df_sub_avg.min_cx, name="cortical ROIs",
+#                              legendgroup="cortical ROIs", mode="lines",
+#                              line=dict(width=2, color=c), showlegend=False), row=3, col=2)
+#
+#
+# fig3.add_shape(x0=prebif_lowg, x1=prebif_topg, y0=0, y1=0.5, row=1, col=2, line=dict(color="lightgray"), fillcolor="lightgray", opacity=0.3)
+# fig3.add_shape(x0=prebif_lowg, x1=prebif_topg, y0=0, y1=0.5, row=2, col=2, line=dict(color="lightgray"), fillcolor="lightgray", opacity=0.3)
+#
+# # s1, s2, s3, s4 = cmap_p[2], cmap_p[4], cmap_p[1], cmap_p[5]
+# # op_scenario = 0.35
+#
+# # fig3.add_vrect(x0=0, x1=prebif_topg, row=1, col=2, fillcolor=s1, opacity=op_scenario, line_width=0)
+# # fig3.add_vrect(x0=prebif_topg, x1=60, row=1, col=2, fillcolor=s2, opacity=op_scenario, line_width=0)
+# #
+# # fig3.add_vrect(x0=0, x1=prebif_topg, row=2, col=2, fillcolor=s1, opacity=op_scenario, line_width=0)
+# # fig3.add_vrect(x0=prebif_topg, x1=60, row=2, col=2, fillcolor=s2, opacity=op_scenario, line_width=0)
+#
+#
+#
+# fig3.update_layout(template="plotly_white", #title="Importance of thalamus parcellation and input (10 subjects)",
+#                    yaxis1=dict(title=r"$\text{max. } r_{PLV} \text{ prebif}$", color="black"),
+#                    yaxis2=dict(title="$r_{PLV}$", color="black", range=[0, 0.5]),
+#                    yaxis4=dict(title="$r_{PLV}$", color="black", range=[0, 0.5]),
+#                    xaxis4=dict(title="Coupling factor (g)"),
+#                    legend=dict(orientation="h", xanchor="right", x=0.9, yanchor="bottom", y=1.02, groupclick="toggleitem"),
+#                    boxmode="group", height=400, width=700, font_family="Arial")
+#
+#
+# pio.write_html(fig3, file= "figures/PAPER-R2_THCER_lineSpace-boxplots.html", auto_open=True, include_mathjax="cdn")
+#

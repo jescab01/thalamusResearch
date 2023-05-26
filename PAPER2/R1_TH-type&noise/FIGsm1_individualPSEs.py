@@ -83,13 +83,13 @@ for ii, subj in enumerate(subjects):
 for i in range(1, 31, 3):
     fig["layout"]["yaxis" + str(i)]["range"] = [-0.05, 0.65]
     if i == list(range(1, 31, 3))[5]:
-        fig["layout"]["yaxis" + str(i)]["title"] = "$r_{PLV}$"
+        fig["layout"]["yaxis" + str(i)]["title"] = r"$r_{PLV(\alpha)}$"
     if i == list(range(1, 31, 3))[-1]:
         fig["layout"]["xaxis" + str(i)]["title"] = "Coupling factor (g)"
 for i in range(2, 31, 3):
     fig["layout"]["yaxis" + str(i)]["range"] = [0, 1]
     if i == list(range(2, 31, 3))[5]:
-        fig["layout"]["yaxis" + str(i)]["title"] = "KSD"
+        fig["layout"]["yaxis" + str(i)]["title"] = r"$KSD(\alpha)$"
     if i == list(range(2, 31, 3))[-1]:
         fig["layout"]["xaxis" + str(i)]["title"] = "Coupling factor (g)"
 for i in range(3, 31, 3):
@@ -103,6 +103,3 @@ fig.update_layout(template="plotly_white", width=900, height=1100, font_family="
 pio.write_image(fig, file=folder + "/PAPER-sm1_SUBJECTS-lineSpaces.svg", engine="kaleido")
 pio.write_html(fig, file=folder + "/PAPER-sm1_SUBJECTS-lineSpaces.html", auto_open=True, include_mathjax="cdn")
 
-folder = "E:\jescab01.github.io\\research\\th\\figs"
-pio.write_image(fig, file=folder + "/PAPER-sm1_SUBJECTS-lineSpaces.svg", engine="kaleido")
-pio.write_html(fig, file=folder + "/PAPER-sm1_SUBJECTS-lineSpaces.html", auto_open=True, include_mathjax="cdn")

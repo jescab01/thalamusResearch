@@ -19,7 +19,7 @@ df_avg["snr"] = np.log((df_avg.max_th - df_avg.min_th)/df_avg.sigmath)
 subject = "NEMOS_035"
 
 fig = make_subplots(rows=2, cols=3, horizontal_spacing=0.09, vertical_spacing=0.15,
-                    subplot_titles=[r"$r_{PLV}$", "mean PLV", "std PLV", "FFT peak", "SNR (th)"],
+                    subplot_titles=[r"$r_{PLV(\alpha)}$", r"$\text{mean }PLV(\alpha)$", r"$\text{std }PLV(\alpha)$", "FFT peak", "SNR (th)"],
                     x_title=r'$\text{Gaussian std. of thalamic input } (\eta_{th})$', y_title=r"$\text{Coupling factor (g)}$",
                     shared_yaxes=True, shared_xaxes=False)
 
@@ -59,10 +59,6 @@ fig.add_vline(x=0.15, col=[2], row=[2], line_width=1, line_dash="dot", line_colo
 fig.update_layout(width=700, height=700, font_family="Arial", xaxis1=dict(type="log"), xaxis2=dict(type="log"),
                   xaxis3=dict(type="log"), xaxis4=dict(type="log"), xaxis5=dict(type="log"))
 
-pio.write_html(fig, file=folder + "/PAPER-R4.2-sigmaadjust.html", auto_open=True, include_mathjax="cdn")
-pio.write_image(fig, file=folder + "/PAPER-R4.2-sigmaadjust.svg", engine="kaleido")
-
-folder = "E:\jescab01.github.io\\research\\th\\figs"
 pio.write_html(fig, file=folder + "/PAPER-R4.2-sigmaadjust.html", auto_open=True, include_mathjax="cdn")
 pio.write_image(fig, file=folder + "/PAPER-R4.2-sigmaadjust.svg", engine="kaleido")
 

@@ -69,6 +69,9 @@ params = [[subj, model, th, cer, g, 0.09, 0.022, 0.09, 2.2e-8] for subj in subje
 params = np.asarray(params, dtype=object)
 n = params.shape[0]
 
+conn = connectivity.Connectivity.from_file(ctb_folder + "NEMOS_035_AAL2_pass.zip")
+np.average(conn.tract_lengths[np.triu_indices(len(conn.tract_lengths), 1)])
+
 
 # Prepare simulation parameters
 simLength = 60 * 1000  # ms
@@ -344,7 +347,7 @@ for j, th in enumerate(structure_th):
                                    name="empirical", legendgroup="empirical", showlegend=sl, xbins=dict(size=0.01)), row=i+1, col=j+1)
         fig.add_trace(go.Histogram(x=sub["dFC"].values[0][np.triu_indices(len(sub["dFC"].values[0]), 1)].flatten(), marker_color="lightgray",
                                    name="simulated", legendgroup="simulated", showlegend=sl, xbins=dict(size=0.01)), row=i+1, col=j+1)
-        text = "rPLV = " + str(round(sub.plv_r.values[0], 2)) + "<br>KSD = "+str(round(ksds[j*len(coupling_vals)+i], 3))
+        text = "rPLV(\u03b1) = " + str(round(sub.plv_r.values[0], 2)) + "<br>KSD(\u03b1) = "+str(round(ksds[j*len(coupling_vals)+i], 3))
         fig.add_annotation(x=0.3, y=35, text=text, showarrow=False, row=i+1, col=j+1)
 
 # Overlay both histograms
@@ -364,6 +367,3 @@ fig.update_traces(opacity=0.75)
 pio.write_html(fig, file="CHECKS/data/PAPER-sm2_KSDprebif_active3b.html", auto_open=True)
 pio.write_image(fig, file="CHECKS/data/PAPER-sm2_KSDprebif_active3b.svg", width=1000, height=700)
 
-folder = "E:\jescab01.github.io\\research\\th\\figs"
-pio.write_html(fig, file=folder + "/PAPER-sm2_KSDprebif_active3b.html", auto_open=True)
-pio.write_image(fig, file=folder + "/PAPER-sm2_KSDprebif_active3b.svg", width=1000, height=700)

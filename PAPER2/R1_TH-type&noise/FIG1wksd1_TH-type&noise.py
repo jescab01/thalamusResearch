@@ -289,23 +289,23 @@ fig.add_shape(x0=0, x1=bif_val, y0=0, y1=0.5, row=4, col=2, line=dict(color="lig
 fig.add_shape(x0=0, x1=bif_val, y0=0, y1=1, row=5, col=2, line=dict(color="lightgray"), fillcolor="lightgray", opacity=0.3)
 
 fig.update_layout(template="plotly_white",  # title="Importance of thalamus parcellation and input (10 subjects)",
-                  yaxis1=dict(title=r"$\text{max. } r_{PLV}$"),  # , range=[0.25, 0.65]),
-                  yaxis2=dict(title="$r_{PLV}$", color="black"),  #, range=[0, 0.5]),
-                  yaxis3=dict(title=r"$\text{max. } r_{PLV}$"),  #, range=[0.25, 0.65]),
+                  yaxis1=dict(title=r"$\text{max. } r_{PLV(\alpha)}$"),  # , range=[0.25, 0.65]),
+                  yaxis2=dict(title=r"$r_{PLV(\alpha)}$", color="black"),  #, range=[0, 0.5]),
+                  yaxis3=dict(title=r"$\text{max. } r_{PLV(\alpha)}$"),  #, range=[0.25, 0.65]),
 
-                  yaxis4=dict(title=r"$\text{min. KSD}$"),
-                  yaxis5=dict(title="$KSD$"),  # , range=[0.35, 1]),
-                  yaxis6=dict(title=r"$\text{min. KSD}$"),
+                  yaxis4=dict(title=r"$\text{min. KSD}(\alpha)$"),
+                  yaxis5=dict(title=r"$KSD(\alpha)$"),  # , range=[0.35, 1]),
+                  yaxis6=dict(title=r"$\text{min. KSD}(\alpha)$"),
 
                   yaxis8=dict(title="Voltage"),  #, range=[0, 0.5]),
 
-                  yaxis10=dict(title=r"$\text{max. } r_{PLV}$"),  # , range=[0.25, 0.65]),
-                  yaxis11=dict(title="$r_{PLV}$", color="black"),  # , range=[0, 0.5]),
-                  yaxis12=dict(title=r"$\text{max. } r_{PLV}$"),  # , range=[0.25, 0.65]),
+                  yaxis10=dict(title=r"$\text{max. } r_{PLV(\alpha)}$"),  # , range=[0.25, 0.65]),
+                  yaxis11=dict(title=r"$r_{PLV(\alpha)}$", color="black"),  # , range=[0, 0.5]),
+                  yaxis12=dict(title=r"$\text{max. } r_{PLV(\alpha)}$"),  # , range=[0.25, 0.65]),
 
-                  yaxis13=dict(title=r"$\text{min. KSD}$"),
-                  yaxis14=dict(title="$KSD$"),  # , range=[0.35, 1]),
-                  yaxis15=dict(title=r"$\text{min. KSD}$"),
+                  yaxis13=dict(title=r"$\text{min. KSD}(\alpha)$"),
+                  yaxis14=dict(title=r"$KSD(\alpha)$"),  # , range=[0.35, 1]),
+                  yaxis15=dict(title=r"$\text{min. KSD}(\alpha)$"),
 
                   xaxis14=dict(title="Coupling factor (g)"),
                   legend=dict(orientation="h", xanchor="right", x=0.8, yanchor="bottom", y=1.05),

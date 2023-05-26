@@ -27,7 +27,7 @@ subject = "NEMOS_035"
 
 ## FIG 4.supp - main
 fig = make_subplots(rows=2, cols=4, horizontal_spacing=0.075, vertical_spacing=0.2,
-                    subplot_titles=[r"$r_{PLV}$", "PLV mean", "FFT peak", "Bifurcations (cx)"],
+                    subplot_titles=[r"$r_{PLV(\alpha)}$", r"$\text{mean }PLV(\alpha)$", "FFT peak", "Bifurcations (cx)"],
                     x_title=r'$\text{Gaussian std. of cortical input } (\eta_{cx})$', y_title=r"$\text{Coupling factor (g)}$",
                     shared_yaxes=True, shared_xaxes=False)
 
@@ -74,6 +74,4 @@ fig.layout.annotations[6].y = 0.57
 pio.write_html(fig, file=folder + "/PAPER-sm3_sigmaCX.html", auto_open=True, include_mathjax="cdn")
 pio.write_image(fig, file=folder + "/PAPER-sm3_sigmaCX.svg", engine="kaleido")
 
-folder = "E:\jescab01.github.io\\research\\th\\figs"
-pio.write_html(fig, file=folder + "/PAPER-sm3_sigmaCX.html", auto_open=True, include_mathjax="cdn")
-pio.write_image(fig, file=folder + "/PAPER-sm3_sigmaCX.svg", engine="kaleido")
+

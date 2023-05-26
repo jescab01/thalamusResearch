@@ -21,7 +21,7 @@ subject = "NEMOS_035"
 
 ## FIG 4.1a - main
 fig = make_subplots(rows=2, cols=3, horizontal_spacing=0.09, vertical_spacing=0.15,
-                    subplot_titles=[r"$r_{PLV}$", "mean PLV", "std PLV", "FFT peak", "SNR (th)", "Bifurcations (cx)"],
+                    subplot_titles=[r"$r_{PLV(\alpha)}$", r"$\text{mean }PLV(\alpha)$", r"$\text{std }PLV(\alpha)$", "FFT peak", "SNR (th)", "Bifurcations (cx)"],
                     x_title=r'$\text{Mean input to thalamus } (p_{th})$', y_title=r"$\text{Coupling factor (g)}$",
                     shared_yaxes=True, shared_xaxes=False)
 
@@ -53,10 +53,6 @@ fig.add_trace(go.Heatmap(z=subset.max_cx - subset.min_cx, x=subset.pth, y=subset
 fig.update_layout(width=700, height=700, font_family="Arial")
 
 
-pio.write_html(fig, file=folder + "/PAPER-R4.1-padjust.html", auto_open=True, include_mathjax="cdn")
-pio.write_image(fig, file=folder + "/PAPER-R4.1-padjust.svg", engine="kaleido")
-
-folder = "E:\jescab01.github.io\\research\\th\\figs"
 pio.write_html(fig, file=folder + "/PAPER-R4.1-padjust.html", auto_open=True, include_mathjax="cdn")
 pio.write_image(fig, file=folder + "/PAPER-R4.1-padjust.svg", engine="kaleido")
 
